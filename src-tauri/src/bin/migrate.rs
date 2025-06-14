@@ -1,4 +1,4 @@
-use case_crafter::database::{MigrationRunner, DatabaseManager};
+use case_crafter::database::MigrationManager;
 use sqlx::SqlitePool;
 use std::env;
 
@@ -22,7 +22,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let database_url = "sqlite:case_crafter_migrations.db";
     let pool = SqlitePool::connect(database_url).await?;
     
-    MigrationRunner::run(pool, command).await?;
+    let migration_manager = MigrationManager::new(pool);
+    migration_manager.initialize().await?;
+    
+    match command.as_str() {
+        "migrate" | "up" => {
+            migration_manager.migrate().await?;
+        }
+        "status" => {
+            migration_manager.status().await?;
+        }
+        cmd if cmd.starts_with("rollback:") => {
+            let version = cmd.strip_prefix("rollback:").unwrap();
+            migration_manager.rollback_migration(version).await?;
+        }
+        _ => {
+            println!("Unknown migration command: {}", command);
+            println!("Available commands: migrate, status, rollback:<version>");
+        }
+    }
     
     Ok(())
 }
