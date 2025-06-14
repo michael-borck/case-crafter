@@ -1,0 +1,15 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Case Crafter
+Comment=Intelligent case study generator for educational purposes
+GenericName=Case Study Generator
+Exec=case-crafter
+Icon=case-crafter
+StartupNotify=true
+NoDisplay=false
+Categories=Education;Office;Development;
+Keywords=education;case-study;ai;learning;generator;
+MimeType=application/x-case-crafter;
+Terminal=false
+StartupWMClass=case-crafter
