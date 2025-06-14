@@ -70,13 +70,6 @@
     },
     "fs": {
       "requireLiteralLeadingDot": false
-    },
-    "dialog": {
-      "open": true,
-      "save": true,
-      "message": true,
-      "ask": true,
-      "confirm": true
     }
   }
 }
