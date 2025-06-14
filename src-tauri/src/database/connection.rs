@@ -1,6 +1,7 @@
-use sqlx::{sqlite::SqliteConnectOptions, SqlitePool};
+use sqlx::{sqlite::SqliteConnectOptions, SqlitePool, Transaction, Sqlite};
 use std::path::Path;
 use std::str::FromStr;
+use std::time::Duration;
 use tauri::AppHandle;
 
 use super::migrations::{MigrationManager, MigrationError};
@@ -20,14 +21,18 @@ impl DatabaseManager {
                 .map_err(|e| sqlx::Error::Io(e.into()))?;
         }
 
-        // Create connection options
+        // Create connection options with optimized settings
         let options = SqliteConnectOptions::from_str(&format!("sqlite://{}", db_path.display()))?
             .create_if_missing(true)
             .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
             .foreign_keys(true)
-            .busy_timeout(std::time::Duration::from_secs(30));
+            .busy_timeout(Duration::from_secs(30))
+            .synchronous(sqlx::sqlite::SqliteSynchronous::Normal)
+            .pragma("cache_size", "10000")
+            .pragma("temp_store", "memory")
+            .pragma("mmap_size", "268435456"); // 256MB
 
-        // Create connection pool
+        // Create connection pool with optimized settings
         let pool = SqlitePool::connect_with(options).await?;
         
         // Run any pending migrations
@@ -44,6 +49,50 @@ impl DatabaseManager {
     /// Get reference to the connection pool
     pub fn pool(&self) -> &SqlitePool {
         &self.pool
+    }
+
+    /// Begin a new database transaction
+    pub async fn begin_transaction(&self) -> Result<Transaction<'_, Sqlite>, sqlx::Error> {
+        self.pool.begin().await
+    }
+
+    /// Execute a function within a transaction, automatically committing or rolling back
+    pub async fn with_transaction<F, R, E>(&self, f: F) -> Result<R, E>
+    where
+        F: for<'c> FnOnce(&mut Transaction<'c, Sqlite>) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<R, E>> + Send + 'c>>,
+        E: From<sqlx::Error>,
+    {
+        let mut tx = self.begin_transaction().await?;
+        
+        match f(&mut tx).await {
+            Ok(result) => {
+                tx.commit().await?;
+                Ok(result)
+            }
+            Err(err) => {
+                let _ = tx.rollback().await;
+                Err(err)
+            }
+        }
+    }
+
+    /// Execute multiple operations atomically within a transaction
+    pub async fn execute_in_transaction<F, R>(&self, operations: F) -> Result<R, sqlx::Error>
+    where
+        F: for<'c> FnOnce(&mut Transaction<'c, Sqlite>) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<R, sqlx::Error>> + Send + 'c>>,
+    {
+        let mut tx = self.begin_transaction().await?;
+        
+        match operations(&mut tx).await {
+            Ok(result) => {
+                tx.commit().await?;
+                Ok(result)
+            }
+            Err(err) => {
+                let _ = tx.rollback().await;
+                Err(err)
+            }
+        }
     }
 
     /// Get the database file path based on app data directory
@@ -64,6 +113,26 @@ impl DatabaseManager {
             .fetch_one(&self.pool)
             .await?;
         Ok(true)
+    }
+
+    /// Get connection pool statistics
+    pub fn pool_stats(&self) -> PoolStats {
+        PoolStats {
+            connections: self.pool.size() as u32,
+            idle_connections: self.pool.num_idle() as u32,
+            // SQLx doesn't expose max_connections directly, but we can set a reasonable default
+            max_connections: 10, // Default SQLite pool size
+        }
+    }
+
+    /// Close all connections in the pool
+    pub async fn close_pool(&self) {
+        self.pool.close().await;
+    }
+
+    /// Check if pool is closed
+    pub fn is_closed(&self) -> bool {
+        self.pool.is_closed()
     }
 
     /// Get database statistics
@@ -189,5 +258,12 @@ pub struct DatabaseStats {
     pub domain_count: u32,
     pub question_count: u32,
     pub file_size_bytes: u64,
+}
+
+#[derive(Debug, serde::Serialize)]
+pub struct PoolStats {
+    pub connections: u32,
+    pub idle_connections: u32,
+    pub max_connections: u32,
 }
 
