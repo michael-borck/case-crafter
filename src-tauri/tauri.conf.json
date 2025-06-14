@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "Case Crafter",
         "width": 1200,
         "height": 800,
@@ -22,7 +23,8 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "capabilities": ["default"]
     }
   },
   "bundle": {
@@ -67,19 +69,7 @@
       "open": true
     },
     "fs": {
-      "scope": [
-        {
-          "allow": [
-            "$APPDATA/case-crafter/**",
-            "$APPDATA/case-crafter",
-            "$HOME/.case-crafter/**",
-            "$HOME/.case-crafter",
-            "$DESKTOP/**",
-            "$DOCUMENT/**",
-            "$DOWNLOAD/**"
-          ]
-        }
-      ]
+      "requireLiteralLeadingDot": false
     },
     "dialog": {
       "open": true,

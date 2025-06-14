@@ -18,7 +18,7 @@ Case Crafter is a cross-platform desktop application built with Tauri that provi
 ## Technology Stack
 
 - **Frontend**: React with TypeScript
-- **Backend**: Rust (Tauri framework)
+- **Backend**: Rust (Tauri 2.x framework)
 - **Database**: SQLite for local storage
 - **AI Integration**: Ollama for local models, optional cloud AI APIs
 - **UI Framework**: Material-UI components
