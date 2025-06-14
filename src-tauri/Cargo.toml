@@ -10,6 +10,11 @@ documentation = "https://github.com/michael-borck/case-crafter#readme"
 keywords = ["education", "case-study", "ai", "learning", "desktop"]
 categories = ["education"]
 edition = "2021"
+default-run = "case-crafter"
+
+[[bin]]
+name = "case-crafter"
+path = "src/main.rs"
 
 [[bin]]
 name = "migrate"
