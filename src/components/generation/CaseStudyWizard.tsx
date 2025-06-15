@@ -36,10 +36,14 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Dialog,
+  DialogTitle,
+  DialogContent,
 } from '@mui/material';
 import {
   Download as DownloadIcon,
   Save as SaveIcon,
+  Folder as FolderIcon,
   Refresh as RefreshIcon,
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
@@ -48,6 +52,7 @@ import {
   Preview as PreviewIcon,
   VisibilityOff as VisibilityOffIcon,
   ExpandMore as ExpandMoreIcon,
+  Close as CloseIcon,
   School as SchoolIcon,
   Business as BusinessIcon,
   Science as ScienceIcon,
@@ -62,6 +67,7 @@ import { StructuredInputForm } from './StructuredInputForm';
 import { AIPromptArea } from './AIPromptArea';
 import { ContentStructureSelector, ContentStructureConfig } from './ContentStructureSelector';
 import { RealTimePreview } from './RealTimePreview';
+import { GenerationSessionManager, GenerationSession } from './GenerationSessionManager';
 import { ConfigurationSchema, ValidationResults } from '../../types/configuration';
 
 // Enhanced wizard step definitions
@@ -232,6 +238,8 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [previewMode, setPreviewMode] = useState<'side' | 'bottom' | 'fullscreen'>('side');
+  const [showSessionManager, setShowSessionManager] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   // Load initial state if provided
   useEffect(() => {
@@ -373,6 +381,141 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
            selectedFramework && 
            contentStructure.elements.some(el => el.isEnabled);
   }, [wizardState.currentStep, selectedFramework, contentStructure]);
+
+  // Session management handlers
+  const getCurrentSession = useCallback((): Partial<GenerationSession> => {
+    return {
+      id: currentSessionId,
+      name: currentSessionId ? `Session ${currentSessionId}` : undefined,
+      framework: selectedFramework,
+      contentStructure,
+      formData,
+      aiPrompt,
+      generationOptions,
+      contentPreferences,
+      metadata: currentSessionId ? {
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdBy: 'current-user',
+        version: '1.0.0',
+        wordCount: contentStructure.totalEstimatedLength,
+        completionStatus: 'in-progress' as const,
+        isStarred: false,
+        isShared: false,
+        openCount: 0,
+      } : undefined,
+    };
+  }, [currentSessionId, selectedFramework, contentStructure, formData, aiPrompt, generationOptions, contentPreferences]);
+
+  const handleLoadSession = useCallback((session: GenerationSession) => {
+    setCurrentSessionId(session.id);
+    
+    // Load session data into wizard state
+    if (session.framework) {
+      setSelectedFramework(session.framework);
+    }
+    if (session.contentStructure) {
+      setContentStructure(session.contentStructure);
+    }
+    if (session.formData) {
+      setFormData(session.formData);
+    }
+    if (session.aiPrompt) {
+      setAiPrompt(session.aiPrompt);
+    }
+    if (session.generationOptions) {
+      setGenerationOptions(session.generationOptions);
+    }
+    if (session.contentPreferences) {
+      setContentPreferences(session.contentPreferences);
+    }
+
+    // Update wizard state to appropriate step based on loaded data
+    let targetStep = 0;
+    if (session.framework) targetStep = Math.max(targetStep, 1);
+    if (session.contentStructure?.elements.length > 0) targetStep = Math.max(targetStep, 2);
+    if (session.formData && Object.keys(session.formData).length > 0) targetStep = Math.max(targetStep, 3);
+    if (session.aiPrompt) targetStep = Math.max(targetStep, 4);
+
+    setWizardState(prev => ({
+      ...prev,
+      currentStep: targetStep,
+    }));
+
+    setShowSessionManager(false);
+  }, []);
+
+  const handleSaveSession = useCallback(async (session: GenerationSession): Promise<boolean> => {
+    try {
+      // In a real implementation, this would save to a backend
+      // For now, we'll use localStorage which is handled by the SessionManager
+      setCurrentSessionId(session.id);
+      return true;
+    } catch (error) {
+      console.error('Failed to save session:', error);
+      return false;
+    }
+  }, []);
+
+  const handleDeleteSession = useCallback(async (sessionId: string): Promise<boolean> => {
+    try {
+      // In a real implementation, this would delete from a backend
+      if (sessionId === currentSessionId) {
+        setCurrentSessionId(null);
+      }
+      return true;
+    } catch (error) {
+      console.error('Failed to delete session:', error);
+      return false;
+    }
+  }, [currentSessionId]);
+
+  const handleExportSession = useCallback((session: GenerationSession, format: 'json' | 'csv' | 'pdf') => {
+    try {
+      const dataStr = JSON.stringify(session, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      
+      const exportFileDefaultName = `${session.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`;
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+    } catch (error) {
+      console.error('Failed to export session:', error);
+    }
+  }, []);
+
+  const handleImportSession = useCallback(async (file: File): Promise<GenerationSession> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result as string;
+          const session = JSON.parse(content) as GenerationSession;
+          
+          // Validate the session structure
+          if (!session.id || !session.name) {
+            throw new Error('Invalid session file structure');
+          }
+
+          // Convert date strings back to Date objects
+          if (session.metadata) {
+            session.metadata.createdAt = new Date(session.metadata.createdAt);
+            session.metadata.updatedAt = new Date(session.metadata.updatedAt);
+            if (session.metadata.lastOpenedAt) {
+              session.metadata.lastOpenedAt = new Date(session.metadata.lastOpenedAt);
+            }
+          }
+
+          resolve(session);
+        } catch (error) {
+          reject(new Error('Failed to parse session file'));
+        }
+      };
+      reader.readAsText(file);
+    });
+  }, []);
 
   // Step content renderers
   const renderPurposeStep = () => (
@@ -1059,6 +1202,11 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
                 </IconButton>
               </Tooltip>
             )}
+            <Tooltip title="Session Management">
+              <IconButton onClick={() => setShowSessionManager(true)}>
+                <FolderIcon />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Save progress">
               <IconButton onClick={handleAutoSave}>
                 <SaveIcon />
@@ -1161,6 +1309,35 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
           </Grid>
         )}
       </Grid>
+
+      {/* Session Management Dialog */}
+      <Dialog 
+        open={showSessionManager} 
+        onClose={() => setShowSessionManager(false)} 
+        maxWidth="xl" 
+        fullWidth
+        scroll="body"
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6">Session Management</Typography>
+            <IconButton onClick={() => setShowSessionManager(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <GenerationSessionManager
+            currentSession={getCurrentSession()}
+            onLoadSession={handleLoadSession}
+            onSaveSession={handleSaveSession}
+            onDeleteSession={handleDeleteSession}
+            onExportSession={handleExportSession}
+            onImportSession={handleImportSession}
+            disabled={disabled}
+          />
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };

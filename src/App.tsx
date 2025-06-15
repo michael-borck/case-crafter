@@ -28,22 +28,22 @@ import {
   Home as HomeIcon,
   Settings as SettingsIcon,
   QuestionAnswer as QuestionIcon,
-  Article as ArticleIcon,
   Build as ConfigIcon,
   Folder as TemplateIcon,
   Store as StoreIcon,
   Construction as BuilderIcon,
   AutoAwesome as GeneratorIcon,
   AccountTree as ConditionalIcon,
+  LibraryBooks as LibraryIcon,
 } from "@mui/icons-material";
 import { useTheme } from "./theme/ThemeProvider";
 import { AIConfigPage } from "./components/ai-config/AIConfigPage";
 import { FormDemo } from "./components/forms/FormDemo";
 import { ValidationDemo } from "./components/forms/ValidationDemo";
 import { ConditionalLogicDemo } from "./components/forms/ConditionalLogicDemo";
-import { CaseStudyGenerator } from "./components/frameworks/CaseStudyGenerator";
 import { CaseStudyWizard } from "./components/generation/CaseStudyWizard";
 import { TemplateManager, TemplateStore, TemplateBuilder } from "./components/configuration";
+import { ContentLibrary } from "./components/content/ContentLibrary";
 
 const SIDEBAR_WIDTH = 280;
 const SIDEBAR_COLLAPSED_WIDTH = 72;
@@ -71,6 +71,8 @@ function App() {
         return <TemplateStore />;
       case 'template-builder':
         return <TemplateBuilder />;
+      case 'case-studies':
+        return <ContentLibrary />;
       case 'home':
       default:
         return renderHomePage();
@@ -100,9 +102,9 @@ function App() {
       color: 'success.main',
     },
     {
-      title: 'Case Study Library',
-      description: 'View and manage your existing case studies',
-      icon: <ArticleIcon sx={{ fontSize: 40 }} />,
+      title: 'Content Library',
+      description: 'Search and browse case studies, templates, and assessments',
+      icon: <LibraryIcon sx={{ fontSize: 40 }} />,
       action: () => setCurrentPage('case-studies'),
       color: 'info.main',
     },
@@ -287,7 +289,7 @@ function App() {
   const navigationItems = [
     { id: 'home', label: 'Home', icon: <HomeIcon />, category: 'main' },
     { id: 'generator', label: 'Case Study Generator', icon: <GeneratorIcon />, category: 'content' },
-    { id: 'case-studies', label: 'Case Studies', icon: <ArticleIcon />, category: 'content' },
+    { id: 'case-studies', label: 'Content Library', icon: <LibraryIcon />, category: 'content' },
     { id: 'templates', label: 'Template Manager', icon: <TemplateIcon />, category: 'templates' },
     { id: 'template-store', label: 'Template Store', icon: <StoreIcon />, category: 'templates' },
     { id: 'template-builder', label: 'Template Builder', icon: <BuilderIcon />, category: 'templates' },
