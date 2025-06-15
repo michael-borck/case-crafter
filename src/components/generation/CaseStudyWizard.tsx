@@ -46,6 +46,7 @@ import {
   Info as InfoIcon,
   Edit as EditIcon,
   Preview as PreviewIcon,
+  VisibilityOff as VisibilityOffIcon,
   ExpandMore as ExpandMoreIcon,
   School as SchoolIcon,
   Business as BusinessIcon,
@@ -60,6 +61,7 @@ import { DynamicForm } from '../forms/DynamicForm';
 import { StructuredInputForm } from './StructuredInputForm';
 import { AIPromptArea } from './AIPromptArea';
 import { ContentStructureSelector, ContentStructureConfig } from './ContentStructureSelector';
+import { RealTimePreview } from './RealTimePreview';
 import { ConfigurationSchema, ValidationResults } from '../../types/configuration';
 
 // Enhanced wizard step definitions
@@ -228,6 +230,8 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
   });
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewMode, setPreviewMode] = useState<'side' | 'bottom' | 'fullscreen'>('side');
 
   // Load initial state if provided
   useEffect(() => {
@@ -342,6 +346,33 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
     const timer = setInterval(handleAutoSave, 30000);
     return () => clearInterval(timer);
   }, [handleAutoSave]);
+
+  // Preview handlers
+  const handleContentEdit = useCallback((elementId: string, newContent: string) => {
+    console.log(`Editing content for element ${elementId}:`, newContent);
+    // In a real implementation, this would update the generated content
+  }, []);
+
+  const handleContentRegenerate = useCallback((elementId: string) => {
+    console.log(`Regenerating content for element ${elementId}`);
+    // In a real implementation, this would trigger AI regeneration
+  }, []);
+
+  const handleExport = useCallback((format: 'pdf' | 'docx' | 'html') => {
+    console.log(`Exporting content as ${format}`);
+    // In a real implementation, this would trigger content export
+  }, []);
+
+  const togglePreview = useCallback(() => {
+    setShowPreview(prev => !prev);
+  }, []);
+
+  const canShowPreview = useCallback(() => {
+    // Show preview from step 3 onwards (after content input)
+    return wizardState.currentStep >= 3 && 
+           selectedFramework && 
+           contentStructure.elements.some(el => el.isEnabled);
+  }, [wizardState.currentStep, selectedFramework, contentStructure]);
 
   // Step content renderers
   const renderPurposeStep = () => (
@@ -1010,14 +1041,24 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
   };
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-      {/* Header */}
-      <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
+    <Box sx={{ maxWidth: showPreview ? '100%' : 1200, mx: 'auto', p: 3 }}>
+      <Grid container spacing={3}>
+        {/* Main Wizard Content */}
+        <Grid item xs={12} md={showPreview ? 6 : 12}>
+          {/* Header */}
+          <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h4" component="h1">
             Case Study Generation Wizard
           </Typography>
           <Stack direction="row" spacing={1}>
+            {canShowPreview() && (
+              <Tooltip title={showPreview ? "Hide Preview" : "Show Preview"}>
+                <IconButton onClick={togglePreview}>
+                  {showPreview ? <VisibilityOffIcon /> : <PreviewIcon />}
+                </IconButton>
+              </Tooltip>
+            )}
             <Tooltip title="Save progress">
               <IconButton onClick={handleAutoSave}>
                 <SaveIcon />
@@ -1098,6 +1139,28 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
           </Step>
         ))}
       </Stepper>
+        </Grid>
+
+        {/* Preview Panel */}
+        {showPreview && canShowPreview() && (
+          <Grid item xs={12} md={6}>
+            <Paper elevation={2} sx={{ p: 2, height: 'fit-content', position: 'sticky', top: 20 }}>
+              <RealTimePreview
+                framework={selectedFramework}
+                contentStructure={contentStructure}
+                formData={formData}
+                aiPrompt={aiPrompt}
+                generationOptions={generationOptions}
+                onContentEdit={handleContentEdit}
+                onContentRegenerate={handleContentRegenerate}
+                onExport={handleExport}
+                isGenerating={isGenerating}
+                disabled={false}
+              />
+            </Paper>
+          </Grid>
+        )}
+      </Grid>
     </Box>
   );
 };
