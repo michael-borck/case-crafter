@@ -37,6 +37,8 @@ import {
   Slider,
   Rating,
   Avatar,
+  Dialog,
+  DialogContent,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -62,7 +64,10 @@ import {
   SavedSearch as SavedSearchIcon,
   History as HistoryIcon,
   BookmarkBorder as BookmarkIcon,
+  GetApp as ExportIcon,
 } from '@mui/icons-material';
+
+import { ContentExporter } from './ContentExporter';
 
 // Content item interface representing a case study or educational content
 export interface ContentItem {
@@ -191,6 +196,7 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({
     message: '',
     severity: 'info'
   });
+  const [exportDialog, setExportDialog] = useState<{open: boolean, contentItem: ContentItem | null}>({ open: false, contentItem: null });
 
   // Load content from localStorage or API
   useEffect(() => {
@@ -1064,7 +1070,36 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({
             <ListItemText>Edit</ListItemText>
           </MenuItem>
         )}
+        <MenuItem
+          onClick={() => {
+            const content = contentItems.find(c => c.id === contentMenu?.contentId);
+            if (content) {
+              setExportDialog({ open: true, contentItem: content });
+            }
+            setContentMenu(null);
+          }}
+        >
+          <ListItemIcon><ExportIcon /></ListItemIcon>
+          <ListItemText>Export</ListItemText>
+        </MenuItem>
       </Menu>
+
+      {/* Export Dialog */}
+      <Dialog
+        open={exportDialog.open}
+        onClose={() => setExportDialog({ open: false, contentItem: null })}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogContent>
+          {exportDialog.contentItem && (
+            <ContentExporter
+              contentItem={exportDialog.contentItem}
+              onClose={() => setExportDialog({ open: false, contentItem: null })}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Notification */}
       <Snackbar

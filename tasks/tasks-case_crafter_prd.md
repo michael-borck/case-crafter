@@ -162,18 +162,18 @@ Based on the Case Crafter PRD (docs/case_crafter_prd.md)
   - [x] 6.1 Build searchable content library with full-text search
   - [x] 6.2 Implement categorization and tagging system
   - [x] 6.3 Create version control system for case study revisions
-  - [ ] 6.4 Build content review workflow with approval stages
-  - [ ] 6.5 Implement AI content flagging for quality assurance
-  - [ ] 6.6 Create sharing controls (public/institutional/private)
-  - [ ] 6.7 Add content export functionality (PDF, Word, HTML)
-  - [ ] 6.8 Implement content analytics and usage tracking
+  - [-] 6.4 Build content review workflow with approval stages (skipped - single user app)
+  - [-] 6.5 Implement AI content flagging for quality assurance (skipped - not needed for single user)
+  - [-] 6.6 Create sharing controls (public/institutional/private) (skipped - export functionality sufficient)
+  - [x] 6.7 Add content export functionality (PDF, Word, HTML, Markdown)
+  - [-] 6.8 Implement content analytics and usage tracking (skipped - limited value for single user)
 
 - [ ] 7.0 Assessment and Analytics System
   - [ ] 7.1 Create intelligent assessment question generation
   - [ ] 7.2 Implement multiple question types (MC, short answer, essay, analysis)
   - [ ] 7.3 Build automated rubric generation system
-  - [ ] 7.4 Create student progress tracking and analytics
-  - [ ] 7.5 Implement content effectiveness analytics
-  - [ ] 7.6 Build recommendation engine for content improvements
-  - [ ] 7.7 Create analytics dashboard with performance metrics
-  - [ ] 7.8 Add data visualization components for insights
+  - [-] 7.4 Create student progress tracking and analytics (skipped - lecturer tool, not student-facing)
+  - [-] 7.5 Implement content effectiveness analytics (skipped - limited value for single user)
+  - [-] 7.6 Build recommendation engine for content improvements (skipped - single user context)
+  - [ ] 7.7 Create basic readability and content analytics dashboard
+  - [-] 7.8 Add data visualization components for insights (skipped - overengineering for single user)

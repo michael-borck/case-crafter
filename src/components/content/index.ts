@@ -7,6 +7,7 @@ export { CategorizationAssistant } from './CategorizationAssistant';
 export { VersionControl } from './VersionControl';
 export { VersionDiff } from './VersionDiff';
 export { RevisionHistory } from './RevisionHistory';
+export { ContentExporter } from './ContentExporter';
 
 export type { ContentItem } from './ContentLibrary';
 export type { Category, Tag } from './CategoryManager';
