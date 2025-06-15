@@ -5,12 +5,14 @@ pub mod models;
 pub mod validation;
 pub mod repository;
 pub mod commands;
+pub mod conditional;
 
 pub use models::*;
 pub use schema::*;
 pub use validation::*;
 pub use repository::ConfigurationRepository;
 pub use commands::ConfigurationService;
+pub use conditional::*;
 
 use thiserror::Error;
 

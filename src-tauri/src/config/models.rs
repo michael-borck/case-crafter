@@ -325,3 +325,70 @@ impl ValidationResults {
         !self.field_errors.is_empty() || !self.global_errors.is_empty()
     }
 }
+
+// Import/Export models
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ConfigurationTemplatePackage {
+    pub version: String,
+    pub exported_at: String,
+    pub templates: Vec<ConfigurationTemplateExport>,
+    pub metadata: Option<PackageMetadata>,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ConfigurationTemplateExport {
+    pub id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub version: String,
+    pub framework: Option<String>,
+    pub category: String,
+    pub schema: ConfigurationSchema,
+    pub tags: Vec<String>,
+    pub target_audience: Vec<String>,
+    pub difficulty_level: Option<String>,
+    pub estimated_minutes: Option<i32>,
+    pub locale: String,
+    pub created_at: String,
+    pub exported_at: String,
+    pub export_metadata: Option<ExportMetadata>,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct PackageMetadata {
+    pub exported_by: String,
+    pub export_tool_version: String,
+    pub description: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ExportMetadata {
+    pub exporter_version: String,
+    pub export_format_version: String,
+    pub total_templates: usize,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ConfigurationImportResult {
+    pub total_templates: usize,
+    pub imported_count: usize,
+    pub skipped_count: usize,
+    pub error_count: usize,
+    pub imported_ids: Vec<String>,
+    pub skipped_templates: Vec<ImportSkippedTemplate>,
+    pub errors: Vec<ImportError>,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ImportSkippedTemplate {
+    pub id: String,
+    pub name: String,
+    pub reason: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ImportError {
+    pub template_id: String,
+    pub template_name: String,
+    pub error: String,
+}

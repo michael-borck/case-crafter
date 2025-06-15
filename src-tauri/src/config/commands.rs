@@ -4,6 +4,7 @@ use super::models::*;
 use super::schema::*;
 use super::repository::ConfigurationRepository;
 use super::validation::ValidationEngine;
+use super::conditional::ConditionalEngine;
 use crate::config::{ConfigurationError, Result};
 use crate::database::DatabaseManager;
 use tauri::{AppHandle, Manager, State};
@@ -14,6 +15,7 @@ use serde_json::Value;
 pub struct ConfigurationService {
     pub repository: ConfigurationRepository,
     pub validation_engine: ValidationEngine,
+    pub conditional_engine: ConditionalEngine,
 }
 
 impl ConfigurationService {
@@ -21,6 +23,7 @@ impl ConfigurationService {
         Self {
             repository: ConfigurationRepository::new(db),
             validation_engine: ValidationEngine::new(),
+            conditional_engine: ConditionalEngine::new(),
         }
     }
 }
@@ -338,6 +341,306 @@ pub async fn validate_configuration_schema(
 ) -> std::result::Result<ValidationResults, String> {
     service.validate_schema(&schema)
         .map_err(|e| format!("Schema validation failed: {}", e))
+}
+
+/// Export configuration templates to JSON file
+#[tauri::command]
+pub async fn export_configuration_templates(
+    app_handle: AppHandle,
+    service: State<'_, ConfigurationService>,
+    template_ids: Vec<String>,
+    include_metadata: bool,
+) -> std::result::Result<String, String> {
+    use tauri_plugin_dialog::DialogExt;
+    use std::fs;
+    
+    // Get all specified templates
+    let mut templates = Vec::new();
+    for id in template_ids {
+        if let Some(stored_config) = service.repository.find_by_id(&id).await
+            .map_err(|e| format!("Failed to get configuration {}: {}", id, e))? {
+            
+            let config_schema = stored_config.to_configuration_schema()
+                .map_err(|e| format!("Failed to parse configuration schema: {}", e))?;
+                
+            templates.push(ConfigurationTemplateExport {
+                id: stored_config.id,
+                name: stored_config.name,
+                description: stored_config.description,
+                version: stored_config.version,
+                framework: stored_config.framework,
+                category: stored_config.category,
+                schema: config_schema,
+                tags: stored_config.tags.split(',').map(|s| s.trim().to_string()).collect(),
+                target_audience: stored_config.target_audience.split(',').map(|s| s.trim().to_string()).collect(),
+                difficulty_level: stored_config.difficulty_level,
+                estimated_minutes: stored_config.estimated_minutes,
+                locale: stored_config.locale,
+                created_at: stored_config.created_at,
+                exported_at: chrono::Utc::now().to_rfc3339(),
+                export_metadata: if include_metadata {
+                    Some(ExportMetadata {
+                        exporter_version: env!("CARGO_PKG_VERSION").to_string(),
+                        export_format_version: "1.0".to_string(),
+                        total_templates: templates.len() + 1,
+                    })
+                } else {
+                    None
+                },
+            });
+        }
+    }
+    
+    if templates.is_empty() {
+        return Err("No valid templates found to export".to_string());
+    }
+    
+    // Create export package
+    let export_package = ConfigurationTemplatePackage {
+        version: "1.0".to_string(),
+        exported_at: chrono::Utc::now().to_rfc3339(),
+        templates,
+        metadata: if include_metadata {
+            Some(PackageMetadata {
+                exported_by: "Case Crafter".to_string(),
+                export_tool_version: env!("CARGO_PKG_VERSION").to_string(),
+                description: "Configuration template export from Case Crafter".to_string(),
+            })
+        } else {
+            None
+        },
+    };
+    
+    // Serialize to JSON
+    let json_content = serde_json::to_string_pretty(&export_package)
+        .map_err(|e| format!("Failed to serialize templates: {}", e))?;
+    
+    // Show save dialog
+    let file_path = app_handle.dialog()
+        .file()
+        .add_filter("JSON Files", &["json"])
+        .add_filter("All Files", &["*"])
+        .set_file_name("configuration_templates.json")
+        .blocking_save_file();
+    
+    if let Some(path) = file_path {
+        fs::write(&path, json_content)
+            .map_err(|e| format!("Failed to write file: {}", e))?;
+        
+        Ok(path.to_string_lossy().to_string())
+    } else {
+        Err("Export cancelled by user".to_string())
+    }
+}
+
+/// Import configuration templates from JSON file
+#[tauri::command]
+pub async fn import_configuration_templates(
+    app_handle: AppHandle,
+    service: State<'_, ConfigurationService>,
+    overwrite_existing: bool,
+) -> std::result::Result<ConfigurationImportResult, String> {
+    use tauri_plugin_dialog::DialogExt;
+    use std::fs;
+    
+    // Show open dialog
+    let file_path = app_handle.dialog()
+        .file()
+        .add_filter("JSON Files", &["json"])
+        .add_filter("All Files", &["*"])
+        .blocking_pick_file();
+    
+    let path = file_path.ok_or_else(|| "Import cancelled by user".to_string())?;
+    
+    // Read file content
+    let json_content = fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read file: {}", e))?;
+    
+    // Parse JSON
+    let import_package: ConfigurationTemplatePackage = serde_json::from_str(&json_content)
+        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+    
+    let mut import_result = ConfigurationImportResult {
+        total_templates: import_package.templates.len(),
+        imported_count: 0,
+        skipped_count: 0,
+        error_count: 0,
+        imported_ids: Vec::new(),
+        skipped_templates: Vec::new(),
+        errors: Vec::new(),
+    };
+    
+    // Import each template
+    for template in import_package.templates {
+        // Check if template already exists
+        let exists = service.repository.exists(&template.id).await
+            .map_err(|e| format!("Failed to check if template exists: {}", e))?;
+        
+        if exists && !overwrite_existing {
+            import_result.skipped_count += 1;
+            import_result.skipped_templates.push(ImportSkippedTemplate {
+                id: template.id,
+                name: template.name,
+                reason: "Template already exists".to_string(),
+            });
+            continue;
+        }
+        
+        // Create new configuration from template
+        let new_config = NewConfiguration {
+            name: template.name,
+            description: template.description,
+            version: template.version,
+            framework: template.framework,
+            category: template.category,
+            schema: template.schema,
+            is_template: true,
+            tags: template.tags,
+            target_audience: template.target_audience,
+            difficulty_level: template.difficulty_level,
+            estimated_minutes: template.estimated_minutes,
+            locale: template.locale,
+            custom_metadata: std::collections::HashMap::new(),
+            created_by: Some("Imported".to_string()),
+        };
+        
+        // Validate and create
+        match service.repository.create(new_config).await {
+            Ok(created_config) => {
+                import_result.imported_count += 1;
+                import_result.imported_ids.push(created_config.id);
+            }
+            Err(e) => {
+                import_result.error_count += 1;
+                import_result.errors.push(ImportError {
+                    template_id: template.id,
+                    template_name: template.name,
+                    error: format!("Failed to create template: {}", e),
+                });
+            }
+        }
+    }
+    
+    Ok(import_result)
+}
+
+/// Evaluate conditional logic for a form
+#[tauri::command]
+pub async fn evaluate_form_conditions(
+    service: State<'_, ConfigurationService>,
+    configuration_id: String,
+    form_data: HashMap<String, Value>,
+) -> std::result::Result<HashMap<String, ConditionalResult>, String> {
+    // Get the configuration schema
+    let stored_config = service.repository.find_by_id(&configuration_id).await
+        .map_err(|e| format!("Failed to get configuration: {}", e))?
+        .ok_or_else(|| "Configuration not found".to_string())?;
+
+    let schema = stored_config.to_configuration_schema()
+        .map_err(|e| format!("Failed to parse configuration schema: {}", e))?;
+
+    // Evaluate conditional logic
+    let mut conditional_engine = service.conditional_engine.clone();
+    let results = conditional_engine.evaluate_form_conditions(&schema, &form_data);
+    
+    Ok(results)
+}
+
+/// Evaluate a single conditional expression
+#[tauri::command]
+pub async fn evaluate_conditional_expression(
+    service: State<'_, ConfigurationService>,
+    configuration_id: String,
+    expression: ConditionalExpression,
+    form_data: HashMap<String, Value>,
+    target_field_id: String,
+) -> std::result::Result<bool, String> {
+    // Get the configuration schema for field definitions
+    let stored_config = service.repository.find_by_id(&configuration_id).await
+        .map_err(|e| format!("Failed to get configuration: {}", e))?
+        .ok_or_else(|| "Configuration not found".to_string())?;
+
+    let schema = stored_config.to_configuration_schema()
+        .map_err(|e| format!("Failed to parse configuration schema: {}", e))?;
+
+    // Create field definitions map
+    let mut field_definitions = HashMap::new();
+    for section in &schema.sections {
+        for field in &section.fields {
+            field_definitions.insert(field.id.clone(), field.clone());
+        }
+    }
+
+    let context = super::conditional::EvaluationContext {
+        form_data,
+        field_definitions,
+        current_field_id: target_field_id,
+    };
+
+    let mut conditional_engine = service.conditional_engine.clone();
+    let result = conditional_engine.evaluate_condition(&expression, &context);
+    
+    Ok(result)
+}
+
+/// Get field dependencies for conditional expressions
+#[tauri::command]
+pub async fn get_conditional_dependencies(
+    service: State<'_, ConfigurationService>,
+    configuration_id: String,
+) -> std::result::Result<HashMap<String, Vec<String>>, String> {
+    // Get the configuration schema
+    let stored_config = service.repository.find_by_id(&configuration_id).await
+        .map_err(|e| format!("Failed to get configuration: {}", e))?
+        .ok_or_else(|| "Configuration not found".to_string())?;
+
+    let schema = stored_config.to_configuration_schema()
+        .map_err(|e| format!("Failed to parse configuration schema: {}", e))?;
+
+    let mut dependencies = HashMap::new();
+    let conditional_engine = service.conditional_engine.clone();
+
+    // Get dependencies from conditional rules
+    for rule in &schema.conditional_logic {
+        let rule_dependencies = conditional_engine.get_dependencies(&rule.condition);
+        dependencies.insert(rule.target.clone(), rule_dependencies);
+    }
+
+    // Get dependencies from field visibility conditions
+    for section in &schema.sections {
+        for field in &section.fields {
+            if let Some(visibility_condition) = &field.visibility_conditions {
+                let field_dependencies = conditional_engine.get_dependencies(visibility_condition);
+                if !field_dependencies.is_empty() {
+                    dependencies.insert(field.id.clone(), field_dependencies);
+                }
+            }
+        }
+    }
+
+    Ok(dependencies)
+}
+
+/// Create a conditional expression helper
+#[tauri::command]
+pub async fn create_conditional_expression(
+    expression_type: String,
+    field_id: String,
+    value: Value,
+    operator: Option<String>,
+) -> std::result::Result<ConditionalExpression, String> {
+    let mut config = HashMap::new();
+    config.insert("field".to_string(), Value::String(field_id));
+    config.insert("value".to_string(), value);
+    
+    if let Some(op) = operator {
+        config.insert("operator".to_string(), Value::String(op));
+    }
+
+    Ok(ConditionalExpression {
+        type: expression_type,
+        config: Some(serde_json::to_value(config).unwrap()),
+    })
 }
 
 /// Initialize configuration service

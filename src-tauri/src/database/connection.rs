@@ -97,13 +97,15 @@ impl DatabaseManager {
     }
 
     /// Get the database file path based on app data directory
-    pub fn get_database_path(_app_handle: &AppHandle) -> Result<std::path::PathBuf, sqlx::Error> {
-        // Temporary workaround for testing - in production this would use app_handle.path()
-        let home_dir = std::env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
-        let app_data_dir = std::path::PathBuf::from(home_dir).join(".local/share");
+    pub fn get_database_path(app_handle: &AppHandle) -> Result<std::path::PathBuf, sqlx::Error> {
+        use tauri::Manager;
         
-        let case_crafter_dir = app_data_dir.join("case-crafter");
-        let db_path = case_crafter_dir.join("database").join("case_crafter.db");
+        // Use Tauri's proper app data directory
+        let app_data_dir = app_handle.path()
+            .app_data_dir()
+            .map_err(|e| sqlx::Error::Protocol(format!("Failed to get app data directory: {}", e)))?;
+        
+        let db_path = app_data_dir.join("database").join("case_crafter.db");
 
         Ok(db_path)
     }

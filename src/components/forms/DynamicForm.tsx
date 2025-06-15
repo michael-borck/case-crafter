@@ -27,6 +27,7 @@ import {
 } from '../../types/configuration';
 import { DynamicField } from './DynamicField';
 import { FormValidationEngine } from './FormValidationEngine';
+import { useConditionalLogic, useFieldVisibility, useFieldEnabled, useFieldValueOverride } from '../../hooks/useConditionalLogic';
 
 export interface DynamicFormProps {
   schema: ConfigurationSchema;
@@ -71,6 +72,17 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
 
   const [validationEngine] = useState(() => new FormValidationEngine(schema));
   const [autoSaveTimer, setAutoSaveTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+
+  // Conditional logic integration
+  const {
+    fieldStates,
+    isLoading: conditionalLoading,
+    error: conditionalError,
+  } = useConditionalLogic({
+    configurationId: schema.id,
+    formData: formState.data,
+    enabled: true,
+  });
 
   // Validate form data
   const validateForm = useCallback(async () => {
@@ -209,20 +221,39 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
           </Typography>
         )}
         
-        {sectionFields.map(field => (
-          <DynamicField
-            key={field.id}
-            field={field}
-            value={formState.data[field.id]}
-            error={formState.errors[field.id]?.[0] || undefined}
-            touched={formState.touched.has(field.id)}
-            onChange={(value) => handleFieldChange(field.id, value)}
-            onBlur={() => handleFieldBlur(field.id)}
-            disabled={disabled}
-            formData={formState.data}
-            mode={mode}
-          />
-        ))}
+        {sectionFields.map(field => {
+          const conditionalResult = fieldStates[field.id];
+          const isVisible = useFieldVisibility(field.id, conditionalResult);
+          const isEnabled = useFieldEnabled(field.id, conditionalResult, !field.display.disabled);
+          const valueOverride = useFieldValueOverride(field.id, conditionalResult);
+          
+          // Apply value override if set
+          const effectiveValue = valueOverride !== undefined ? valueOverride : formState.data[field.id];
+          
+          // Get error override or regular validation error
+          const effectiveError = conditionalResult?.error_override || 
+                                formState.errors[field.id]?.[0] || 
+                                undefined;
+
+          if (!isVisible) {
+            return null;
+          }
+
+          return (
+            <DynamicField
+              key={field.id}
+              field={field}
+              value={effectiveValue}
+              error={effectiveError}
+              touched={formState.touched.has(field.id)}
+              onChange={(value) => handleFieldChange(field.id, value)}
+              onBlur={() => handleFieldBlur(field.id)}
+              disabled={disabled || !isEnabled}
+              formData={formState.data}
+              mode={mode}
+            />
+          );
+        })}
       </Stack>
     );
 
@@ -298,6 +329,25 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
               Please correct the errors below before submitting.
             </Typography>
           </Alert>
+        )}
+
+        {/* Conditional Logic Error */}
+        {conditionalError && (
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            <Typography variant="body2">
+              Conditional logic error: {conditionalError}
+            </Typography>
+          </Alert>
+        )}
+
+        {/* Conditional Logic Loading */}
+        {conditionalLoading && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
+            <CircularProgress size={16} />
+            <Typography variant="body2" color="text.secondary">
+              Evaluating form conditions...
+            </Typography>
+          </Box>
         )}
       </Paper>
 

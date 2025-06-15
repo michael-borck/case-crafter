@@ -17,6 +17,10 @@ export interface ConfigurationSchema {
   created_by?: string;
 }
 
+// Type aliases for backward compatibility
+export type SectionDefinition = FieldSection;
+export type ConditionalLogic = ConditionalRule;
+
 export interface FieldSection {
   id: string;
   title: string;
@@ -359,3 +363,80 @@ export const CONFIGURATION_CATEGORIES = [
   'learning_objectives',
   'custom',
 ] as const;
+
+// Import/Export types
+export interface ConfigurationTemplatePackage {
+  version: string;
+  exported_at: string;
+  templates: ConfigurationTemplateExport[];
+  metadata?: PackageMetadata;
+}
+
+export interface ConfigurationTemplateExport {
+  id: string;
+  name: string;
+  description?: string;
+  version: string;
+  framework?: string;
+  category: string;
+  schema: ConfigurationSchema;
+  tags: string[];
+  target_audience: string[];
+  difficulty_level?: string;
+  estimated_minutes?: number;
+  locale: string;
+  created_at: string;
+  exported_at: string;
+  export_metadata?: ExportMetadata;
+}
+
+export interface PackageMetadata {
+  exported_by: string;
+  export_tool_version: string;
+  description: string;
+}
+
+export interface ExportMetadata {
+  exporter_version: string;
+  export_format_version: string;
+  total_templates: number;
+}
+
+export interface ConfigurationImportResult {
+  total_templates: number;
+  imported_count: number;
+  skipped_count: number;
+  error_count: number;
+  imported_ids: string[];
+  skipped_templates: ImportSkippedTemplate[];
+  errors: ImportError[];
+}
+
+export interface ImportSkippedTemplate {
+  id: string;
+  name: string;
+  reason: string;
+}
+
+export interface ImportError {
+  template_id: string;
+  template_name: string;
+  error: string;
+}
+
+// Conditional Logic types
+export interface ConditionalResult {
+  field_id: string;
+  is_visible: boolean;
+  is_enabled: boolean;
+  value_override?: any;
+  options_override?: OptionItem[];
+  error_override?: string;
+  applied_rules: string[];
+}
+
+export interface EvaluationContext {
+  form_data: Record<string, any>;
+  field_definitions: Record<string, FieldDefinition>;
+  current_field_id: string;
+}

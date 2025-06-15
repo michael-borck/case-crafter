@@ -285,7 +285,13 @@ fn main() {
             config_commands::count_configurations,
             config_commands::configuration_exists,
             config_commands::get_recent_configurations,
-            config_commands::validate_configuration_schema
+            config_commands::validate_configuration_schema,
+            config_commands::export_configuration_templates,
+            config_commands::import_configuration_templates,
+            config_commands::evaluate_form_conditions,
+            config_commands::evaluate_conditional_expression,
+            config_commands::get_conditional_dependencies,
+            config_commands::create_conditional_expression
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
