@@ -43,13 +43,13 @@ import { ValidationDemo } from "./components/forms/ValidationDemo";
 import { ConditionalLogicDemo } from "./components/forms/ConditionalLogicDemo";
 import { CaseStudyWizard } from "./components/generation/CaseStudyWizard";
 import { TemplateManager, TemplateStore, TemplateBuilder } from "./components/configuration";
-import { ContentLibrary } from "./components/content/ContentLibrary";
+import { ContentLibrary, CategoryManager } from "./components/content";
 
 const SIDEBAR_WIDTH = 280;
 const SIDEBAR_COLLAPSED_WIDTH = 72;
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'ai-config' | 'case-studies' | 'questions' | 'configuration' | 'validation' | 'conditional' | 'generator' | 'templates' | 'template-store' | 'template-builder'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'ai-config' | 'case-studies' | 'questions' | 'configuration' | 'validation' | 'conditional' | 'generator' | 'templates' | 'template-store' | 'template-builder' | 'categories'>('home');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { mode, toggleTheme } = useTheme();
 
@@ -73,6 +73,8 @@ function App() {
         return <TemplateBuilder />;
       case 'case-studies':
         return <ContentLibrary />;
+      case 'categories':
+        return <CategoryManager />;
       case 'home':
       default:
         return renderHomePage();
@@ -290,6 +292,7 @@ function App() {
     { id: 'home', label: 'Home', icon: <HomeIcon />, category: 'main' },
     { id: 'generator', label: 'Case Study Generator', icon: <GeneratorIcon />, category: 'content' },
     { id: 'case-studies', label: 'Content Library', icon: <LibraryIcon />, category: 'content' },
+    { id: 'categories', label: 'Categories & Tags', icon: <ConfigIcon />, category: 'content' },
     { id: 'templates', label: 'Template Manager', icon: <TemplateIcon />, category: 'templates' },
     { id: 'template-store', label: 'Template Store', icon: <StoreIcon />, category: 'templates' },
     { id: 'template-builder', label: 'Template Builder', icon: <BuilderIcon />, category: 'templates' },
