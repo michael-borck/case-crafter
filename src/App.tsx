@@ -42,6 +42,7 @@ import { FormDemo } from "./components/forms/FormDemo";
 import { ValidationDemo } from "./components/forms/ValidationDemo";
 import { ConditionalLogicDemo } from "./components/forms/ConditionalLogicDemo";
 import { CaseStudyGenerator } from "./components/frameworks/CaseStudyGenerator";
+import { CaseStudyWizard } from "./components/generation/CaseStudyWizard";
 import { TemplateManager, TemplateStore, TemplateBuilder } from "./components/configuration";
 
 const SIDEBAR_WIDTH = 280;
@@ -63,7 +64,7 @@ function App() {
       case 'conditional':
         return <ConditionalLogicDemo />;
       case 'generator':
-        return <CaseStudyGenerator />;
+        return <CaseStudyWizard />;
       case 'templates':
         return <TemplateManager />;
       case 'template-store':

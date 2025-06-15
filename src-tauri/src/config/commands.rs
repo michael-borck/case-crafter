@@ -4,11 +4,14 @@ use super::models::*;
 use super::schema::*;
 use super::repository::ConfigurationRepository;
 use super::validation::ValidationEngine;
-use super::conditional::ConditionalEngine;
+use super::conditional::{ConditionalEngine, ConditionalResult};
 use crate::config::{ConfigurationError, Result};
 use crate::database::DatabaseManager;
 use tauri::{AppHandle, Manager, State};
+use tauri_plugin_dialog::{DialogExt, FilePath};
 use std::collections::HashMap;
+use std::fs;
+use std::path::PathBuf;
 use serde_json::Value;
 
 /// Configuration management service
@@ -351,8 +354,6 @@ pub async fn export_configuration_templates(
     template_ids: Vec<String>,
     include_metadata: bool,
 ) -> std::result::Result<String, String> {
-    use tauri_plugin_dialog::DialogExt;
-    use std::fs;
     
     // Get all specified templates
     let mut templates = Vec::new();
@@ -376,7 +377,7 @@ pub async fn export_configuration_templates(
                 difficulty_level: stored_config.difficulty_level,
                 estimated_minutes: stored_config.estimated_minutes,
                 locale: stored_config.locale,
-                created_at: stored_config.created_at,
+                created_at: stored_config.created_at.to_rfc3339(),
                 exported_at: chrono::Utc::now().to_rfc3339(),
                 export_metadata: if include_metadata {
                     Some(ExportMetadata {
@@ -416,18 +417,20 @@ pub async fn export_configuration_templates(
         .map_err(|e| format!("Failed to serialize templates: {}", e))?;
     
     // Show save dialog
-    let file_path = app_handle.dialog()
+    let file_path: Option<FilePath> = app_handle.dialog()
         .file()
         .add_filter("JSON Files", &["json"])
         .add_filter("All Files", &["*"])
         .set_file_name("configuration_templates.json")
         .blocking_save_file();
     
-    if let Some(path) = file_path {
-        fs::write(&path, json_content)
+    if let Some(file_path) = file_path {
+        let path_buf = file_path.into_path()
+            .map_err(|e| format!("Failed to convert file path: {}", e))?;
+        fs::write(&path_buf, json_content)
             .map_err(|e| format!("Failed to write file: {}", e))?;
         
-        Ok(path.to_string_lossy().to_string())
+        Ok(path_buf.to_string_lossy().to_string())
     } else {
         Err("Export cancelled by user".to_string())
     }
@@ -440,17 +443,17 @@ pub async fn import_configuration_templates(
     service: State<'_, ConfigurationService>,
     overwrite_existing: bool,
 ) -> std::result::Result<ConfigurationImportResult, String> {
-    use tauri_plugin_dialog::DialogExt;
-    use std::fs;
     
     // Show open dialog
-    let file_path = app_handle.dialog()
+    let file_path: Option<FilePath> = app_handle.dialog()
         .file()
         .add_filter("JSON Files", &["json"])
         .add_filter("All Files", &["*"])
         .blocking_pick_file();
     
-    let path = file_path.ok_or_else(|| "Import cancelled by user".to_string())?;
+    let file_path = file_path.ok_or_else(|| "Import cancelled by user".to_string())?;
+    let path = file_path.into_path()
+        .map_err(|e| format!("Failed to convert file path: {}", e))?;
     
     // Read file content
     let json_content = fs::read_to_string(&path)
@@ -479,8 +482,8 @@ pub async fn import_configuration_templates(
         if exists && !overwrite_existing {
             import_result.skipped_count += 1;
             import_result.skipped_templates.push(ImportSkippedTemplate {
-                id: template.id,
-                name: template.name,
+                id: template.id.clone(),
+                name: template.name.clone(),
                 reason: "Template already exists".to_string(),
             });
             continue;
@@ -488,18 +491,18 @@ pub async fn import_configuration_templates(
         
         // Create new configuration from template
         let new_config = NewConfiguration {
-            name: template.name,
-            description: template.description,
-            version: template.version,
-            framework: template.framework,
-            category: template.category,
-            schema: template.schema,
+            name: template.name.clone(),
+            description: template.description.clone(),
+            version: template.version.clone(),
+            framework: template.framework.clone(),
+            category: template.category.clone(),
+            schema: template.schema.clone(),
             is_template: true,
-            tags: template.tags,
-            target_audience: template.target_audience,
-            difficulty_level: template.difficulty_level,
+            tags: template.tags.clone(),
+            target_audience: template.target_audience.clone(),
+            difficulty_level: template.difficulty_level.clone(),
             estimated_minutes: template.estimated_minutes,
-            locale: template.locale,
+            locale: template.locale.clone(),
             custom_metadata: std::collections::HashMap::new(),
             created_by: Some("Imported".to_string()),
         };
@@ -513,8 +516,8 @@ pub async fn import_configuration_templates(
             Err(e) => {
                 import_result.error_count += 1;
                 import_result.errors.push(ImportError {
-                    template_id: template.id,
-                    template_name: template.name,
+                    template_id: template.id.clone(),
+                    template_name: template.name.clone(),
                     error: format!("Failed to create template: {}", e),
                 });
             }
@@ -627,20 +630,37 @@ pub async fn create_conditional_expression(
     expression_type: String,
     field_id: String,
     value: Value,
-    operator: Option<String>,
+    _operator: Option<String>,
 ) -> std::result::Result<ConditionalExpression, String> {
-    let mut config = HashMap::new();
-    config.insert("field".to_string(), Value::String(field_id));
-    config.insert("value".to_string(), value);
-    
-    if let Some(op) = operator {
-        config.insert("operator".to_string(), Value::String(op));
+    match expression_type.as_str() {
+        "equals" => Ok(ConditionalExpression::Equals {
+            field: field_id,
+            value,
+        }),
+        "not_equals" => Ok(ConditionalExpression::NotEquals {
+            field: field_id,
+            value,
+        }),
+        "greater_than" => Ok(ConditionalExpression::GreaterThan {
+            field: field_id,
+            value,
+        }),
+        "less_than" => Ok(ConditionalExpression::LessThan {
+            field: field_id,
+            value,
+        }),
+        "contains" => Ok(ConditionalExpression::Contains {
+            field: field_id,
+            value,
+        }),
+        "is_empty" => Ok(ConditionalExpression::IsEmpty {
+            field: field_id,
+        }),
+        "is_not_empty" => Ok(ConditionalExpression::IsNotEmpty {
+            field: field_id,
+        }),
+        _ => Err(format!("Unknown expression type: {}", expression_type)),
     }
-
-    Ok(ConditionalExpression {
-        type: expression_type,
-        config: Some(serde_json::to_value(config).unwrap()),
-    })
 }
 
 /// Initialize configuration service

@@ -7,6 +7,7 @@ use serde_json::Value;
 use regex::Regex;
 
 /// Conditional logic engine for evaluating field dependencies
+#[derive(Clone)]
 pub struct ConditionalEngine {
     /// Cache for compiled expressions to improve performance
     expression_cache: HashMap<String, CompiledExpression>,
@@ -124,28 +125,46 @@ impl ConditionalEngine {
         expression: &ConditionalExpression,
         context: &EvaluationContext,
     ) -> bool {
-        match expression.type.as_str() {
-            "equals" => self.evaluate_equals_condition(expression, context),
-            "not_equals" => !self.evaluate_equals_condition(expression, context),
-            "greater_than" => self.evaluate_comparison_condition(expression, context, |a, b| a > b),
-            "less_than" => self.evaluate_comparison_condition(expression, context, |a, b| a < b),
-            "greater_equal" => self.evaluate_comparison_condition(expression, context, |a, b| a >= b),
-            "less_equal" => self.evaluate_comparison_condition(expression, context, |a, b| a <= b),
-            "contains" => self.evaluate_contains_condition(expression, context),
-            "regex" => self.evaluate_regex_condition(expression, context),
-            "is_empty" => self.evaluate_empty_condition(expression, context),
-            "is_not_empty" => !self.evaluate_empty_condition(expression, context),
-            "in_list" => self.evaluate_in_list_condition(expression, context),
-            "not_in_list" => !self.evaluate_in_list_condition(expression, context),
-            "and" => self.evaluate_logical_and_condition(expression, context),
-            "or" => self.evaluate_logical_or_condition(expression, context),
-            "not" => !self.evaluate_nested_condition(expression, context),
-            "field_count" => self.evaluate_field_count_condition(expression, context),
-            "custom" => self.evaluate_custom_condition(expression, context),
-            _ => {
-                eprintln!("Unknown condition type: {}", expression.type);
-                false
-            }
+        match expression {
+            ConditionalExpression::Equals { field, value } => {
+                self.evaluate_equals_condition(field, value, context)
+            },
+            ConditionalExpression::NotEquals { field, value } => {
+                !self.evaluate_equals_condition(field, value, context)
+            },
+            ConditionalExpression::GreaterThan { field, value } => {
+                self.evaluate_comparison_condition(field, value, context, |a, b| a > b)
+            },
+            ConditionalExpression::LessThan { field, value } => {
+                self.evaluate_comparison_condition(field, value, context, |a, b| a < b)
+            },
+            ConditionalExpression::Contains { field, value } => {
+                self.evaluate_contains_condition(field, value, context)
+            },
+            ConditionalExpression::IsEmpty { field } => {
+                self.evaluate_empty_condition(field, context)
+            },
+            ConditionalExpression::IsNotEmpty { field } => {
+                !self.evaluate_empty_condition(field, context)
+            },
+            ConditionalExpression::Matches { field, pattern } => {
+                self.evaluate_regex_condition(field, pattern, context)
+            },
+            ConditionalExpression::In { field, values } => {
+                self.evaluate_in_list_condition(field, values, context)
+            },
+            ConditionalExpression::And { expressions } => {
+                expressions.iter().all(|expr| self.evaluate_condition(expr, context))
+            },
+            ConditionalExpression::Or { expressions } => {
+                expressions.iter().any(|expr| self.evaluate_condition(expr, context))
+            },
+            ConditionalExpression::Not { expression } => {
+                !self.evaluate_condition(expression, context)
+            },
+            ConditionalExpression::Custom { expression } => {
+                self.evaluate_custom_condition(expression, context)
+            },
         }
     }
 
@@ -164,170 +183,58 @@ impl ConditionalEngine {
     }
 
     // Condition evaluation methods
-    fn evaluate_equals_condition(&self, expression: &ConditionalExpression, context: &EvaluationContext) -> bool {
-        if let Some(config) = &expression.config {
-            if let (Some(field_id), Some(expected_value)) = (
-                config.get("field").and_then(|v| v.as_str()),
-                config.get("value")
-            ) {
-                if let Some(actual_value) = context.form_data.get(field_id) {
-                    return self.values_equal(actual_value, expected_value);
-                }
-            }
+    fn evaluate_equals_condition(&self, field: &str, expected_value: &Value, context: &EvaluationContext) -> bool {
+        if let Some(actual_value) = context.form_data.get(field) {
+            return self.values_equal(actual_value, expected_value);
         }
         false
     }
 
-    fn evaluate_comparison_condition<F>(&self, expression: &ConditionalExpression, context: &EvaluationContext, comparator: F) -> bool
+    fn evaluate_comparison_condition<F>(&self, field: &str, expected_value: &Value, context: &EvaluationContext, comparator: F) -> bool
     where
         F: Fn(f64, f64) -> bool,
     {
-        if let Some(config) = &expression.config {
-            if let (Some(field_id), Some(expected_value)) = (
-                config.get("field").and_then(|v| v.as_str()),
-                config.get("value")
-            ) {
-                if let Some(actual_value) = context.form_data.get(field_id) {
-                    if let (Some(a), Some(b)) = (self.to_number(actual_value), self.to_number(expected_value)) {
-                        return comparator(a, b);
-                    }
+        if let Some(actual_value) = context.form_data.get(field) {
+            if let (Some(a), Some(b)) = (self.to_number(actual_value), self.to_number(expected_value)) {
+                return comparator(a, b);
+            }
+        }
+        false
+    }
+
+    fn evaluate_contains_condition(&self, field: &str, search_value: &Value, context: &EvaluationContext) -> bool {
+        if let Some(actual_value) = context.form_data.get(field) {
+            return self.value_contains(actual_value, search_value);
+        }
+        false
+    }
+
+    fn evaluate_regex_condition(&self, field: &str, pattern: &str, context: &EvaluationContext) -> bool {
+        if let Some(actual_value) = context.form_data.get(field) {
+            if let Some(text) = actual_value.as_str() {
+                if let Ok(regex) = Regex::new(pattern) {
+                    return regex.is_match(text);
                 }
             }
         }
         false
     }
 
-    fn evaluate_contains_condition(&self, expression: &ConditionalExpression, context: &EvaluationContext) -> bool {
-        if let Some(config) = &expression.config {
-            if let (Some(field_id), Some(search_value)) = (
-                config.get("field").and_then(|v| v.as_str()),
-                config.get("value").and_then(|v| v.as_str())
-            ) {
-                if let Some(actual_value) = context.form_data.get(field_id) {
-                    if let Some(text) = actual_value.as_str() {
-                        return text.to_lowercase().contains(&search_value.to_lowercase());
-                    }
-                }
-            }
+    fn evaluate_empty_condition(&self, field: &str, context: &EvaluationContext) -> bool {
+        if let Some(actual_value) = context.form_data.get(field) {
+            return self.is_empty_value(actual_value);
+        }
+        true // Field not in form data means it's empty
+    }
+
+    fn evaluate_in_list_condition(&self, field: &str, values: &[Value], context: &EvaluationContext) -> bool {
+        if let Some(actual_value) = context.form_data.get(field) {
+            return values.iter().any(|v| self.values_equal(actual_value, v));
         }
         false
     }
 
-    fn evaluate_regex_condition(&self, expression: &ConditionalExpression, context: &EvaluationContext) -> bool {
-        if let Some(config) = &expression.config {
-            if let (Some(field_id), Some(pattern)) = (
-                config.get("field").and_then(|v| v.as_str()),
-                config.get("pattern").and_then(|v| v.as_str())
-            ) {
-                if let Some(actual_value) = context.form_data.get(field_id) {
-                    if let Some(text) = actual_value.as_str() {
-                        if let Ok(regex) = Regex::new(pattern) {
-                            return regex.is_match(text);
-                        }
-                    }
-                }
-            }
-        }
-        false
-    }
-
-    fn evaluate_empty_condition(&self, expression: &ConditionalExpression, context: &EvaluationContext) -> bool {
-        if let Some(config) = &expression.config {
-            if let Some(field_id) = config.get("field").and_then(|v| v.as_str()) {
-                if let Some(actual_value) = context.form_data.get(field_id) {
-                    return self.is_empty_value(actual_value);
-                }
-                return true; // Field not in form data means it's empty
-            }
-        }
-        false
-    }
-
-    fn evaluate_in_list_condition(&self, expression: &ConditionalExpression, context: &EvaluationContext) -> bool {
-        if let Some(config) = &expression.config {
-            if let (Some(field_id), Some(list)) = (
-                config.get("field").and_then(|v| v.as_str()),
-                config.get("values").and_then(|v| v.as_array())
-            ) {
-                if let Some(actual_value) = context.form_data.get(field_id) {
-                    return list.iter().any(|v| self.values_equal(actual_value, v));
-                }
-            }
-        }
-        false
-    }
-
-    fn evaluate_logical_and_condition(&mut self, expression: &ConditionalExpression, context: &EvaluationContext) -> bool {
-        if let Some(config) = &expression.config {
-            if let Some(conditions) = config.get("conditions").and_then(|v| v.as_array()) {
-                for condition_value in conditions {
-                    if let Ok(condition) = serde_json::from_value::<ConditionalExpression>(condition_value.clone()) {
-                        if !self.evaluate_condition(&condition, context) {
-                            return false;
-                        }
-                    }
-                }
-                return true;
-            }
-        }
-        false
-    }
-
-    fn evaluate_logical_or_condition(&mut self, expression: &ConditionalExpression, context: &EvaluationContext) -> bool {
-        if let Some(config) = &expression.config {
-            if let Some(conditions) = config.get("conditions").and_then(|v| v.as_array()) {
-                for condition_value in conditions {
-                    if let Ok(condition) = serde_json::from_value::<ConditionalExpression>(condition_value.clone()) {
-                        if self.evaluate_condition(&condition, context) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        false
-    }
-
-    fn evaluate_nested_condition(&mut self, expression: &ConditionalExpression, context: &EvaluationContext) -> bool {
-        if let Some(config) = &expression.config {
-            if let Some(condition_value) = config.get("condition") {
-                if let Ok(condition) = serde_json::from_value::<ConditionalExpression>(condition_value.clone()) {
-                    return self.evaluate_condition(&condition, context);
-                }
-            }
-        }
-        false
-    }
-
-    fn evaluate_field_count_condition(&self, expression: &ConditionalExpression, context: &EvaluationContext) -> bool {
-        if let Some(config) = &expression.config {
-            if let (Some(field_pattern), Some(expected_count), Some(operator)) = (
-                config.get("field_pattern").and_then(|v| v.as_str()),
-                config.get("count").and_then(|v| v.as_u64()),
-                config.get("operator").and_then(|v| v.as_str())
-            ) {
-                let matching_fields = context.form_data.keys()
-                    .filter(|k| k.starts_with(field_pattern))
-                    .filter(|k| !self.is_empty_value(context.form_data.get(*k).unwrap()))
-                    .count() as u64;
-
-                match operator {
-                    "equals" => matching_fields == expected_count,
-                    "greater_than" => matching_fields > expected_count,
-                    "less_than" => matching_fields < expected_count,
-                    "greater_equal" => matching_fields >= expected_count,
-                    "less_equal" => matching_fields <= expected_count,
-                    _ => false,
-                }
-            } else {
-                false
-            }
-        } else {
-            false
-        }
-    }
-
-    fn evaluate_custom_condition(&self, expression: &ConditionalExpression, context: &EvaluationContext) -> bool {
+    fn evaluate_custom_condition(&self, _expression: &str, _context: &EvaluationContext) -> bool {
         // Custom conditions would be implemented based on specific business logic
         // This is a placeholder for extensibility
         false
@@ -368,6 +275,18 @@ impl ConditionalEngine {
         }
     }
 
+    fn value_contains(&self, haystack: &Value, needle: &Value) -> bool {
+        match (haystack, needle) {
+            (Value::String(text), Value::String(search)) => {
+                text.to_lowercase().contains(&search.to_lowercase())
+            },
+            (Value::Array(arr), needle) => {
+                arr.iter().any(|item| self.values_equal(item, needle))
+            },
+            _ => false,
+        }
+    }
+
     /// Get all field dependencies for a conditional expression
     pub fn get_dependencies(&self, expression: &ConditionalExpression) -> Vec<String> {
         let mut dependencies = Vec::new();
@@ -378,27 +297,31 @@ impl ConditionalEngine {
     }
 
     fn collect_dependencies(&self, expression: &ConditionalExpression, dependencies: &mut Vec<String>) {
-        if let Some(config) = &expression.config {
-            // Single field dependency
-            if let Some(field_id) = config.get("field").and_then(|v| v.as_str()) {
-                dependencies.push(field_id.to_string());
-            }
-
-            // Multiple conditions (logical operations)
-            if let Some(conditions) = config.get("conditions").and_then(|v| v.as_array()) {
-                for condition_value in conditions {
-                    if let Ok(condition) = serde_json::from_value::<ConditionalExpression>(condition_value.clone()) {
-                        self.collect_dependencies(&condition, dependencies);
-                    }
+        match expression {
+            ConditionalExpression::Equals { field, .. } |
+            ConditionalExpression::NotEquals { field, .. } |
+            ConditionalExpression::GreaterThan { field, .. } |
+            ConditionalExpression::LessThan { field, .. } |
+            ConditionalExpression::Contains { field, .. } |
+            ConditionalExpression::IsEmpty { field } |
+            ConditionalExpression::IsNotEmpty { field } |
+            ConditionalExpression::Matches { field, .. } |
+            ConditionalExpression::In { field, .. } => {
+                dependencies.push(field.clone());
+            },
+            ConditionalExpression::And { expressions } |
+            ConditionalExpression::Or { expressions } => {
+                for expr in expressions {
+                    self.collect_dependencies(expr, dependencies);
                 }
-            }
-
-            // Nested condition
-            if let Some(condition_value) = config.get("condition") {
-                if let Ok(condition) = serde_json::from_value::<ConditionalExpression>(condition_value.clone()) {
-                    self.collect_dependencies(&condition, dependencies);
-                }
-            }
+            },
+            ConditionalExpression::Not { expression } => {
+                self.collect_dependencies(expression, dependencies);
+            },
+            ConditionalExpression::Custom { .. } => {
+                // Custom expressions may have complex dependencies
+                // For now, we don't extract dependencies from custom expressions
+            },
         }
     }
 }

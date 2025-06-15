@@ -66,9 +66,15 @@ Based on the Case Crafter PRD (docs/case_crafter_prd.md)
 - `src/components/frameworks/FrameworkSelector.tsx` - Business framework selection with detailed framework information (created)
 - `src/components/frameworks/FrameworkMapper.tsx` - Framework field mapping and configuration system (created)
 - `src/components/frameworks/CaseStudyGenerator.tsx` - Complete case study generator with step-by-step workflow (created)
+- `src/components/generation/CaseStudyWizard.tsx` - Enhanced step-by-step generation wizard with comprehensive UX (created)
+- `src/components/generation/index.ts` - Export file for generation components (created)
 - `src/components/configuration/TemplateManager.tsx` - Template management with search, filtering, favorites, and CRUD operations (created)
 - `src/components/configuration/TemplateStore.tsx` - Template marketplace with categories, ratings, and featured templates (created)
 - `src/components/configuration/TemplateBuilder.tsx` - Visual template builder with step-by-step creation workflow (created)
+- `src/hooks/useWizardState.ts` - React hook for managing wizard state, navigation, and data (created)
+- `src/hooks/useGenerationSession.ts` - Hook for managing case study generation sessions and persistence (created)
+- `src/components/generation/StructuredInputForm.tsx` - Enhanced structured input form with field grouping, filtering, and progress tracking (created)
+- `src/components/generation/DynamicFieldRenderer.tsx` - Comprehensive field renderer supporting 15+ field types with advanced features (created)
 - `src/components/Dashboard.tsx` - Main dashboard interface component
 - `src/components/CaseStudyGenerator/` - Case study generation interface components
 - `src/components/ConfigurationManager/` - Administrative configuration interface
@@ -117,19 +123,19 @@ Based on the Case Crafter PRD (docs/case_crafter_prd.md)
   - [x] 3.7 Add progress tracking and cancellation for generation tasks
   - [x] 3.8 Create fallback mechanisms for AI service failures
 
-- [ ] 4.0 Dynamic Configuration System
+- [x] 4.0 Dynamic Configuration System
   - [x] 4.1 Design JSON schema for configurable input fields and options
   - [x] 4.2 Implement administrative interface for field management
   - [x] 4.3 Create dynamic form rendering system based on configuration
   - [x] 4.4 Build field validation engine with cross-field dependencies
   - [x] 4.5 Implement business framework integration and mapping
   - [x] 4.6 Create template management system for configurations
-  - [ ] 4.7 Add import/export functionality for configuration templates
-  - [ ] 4.8 Implement conditional logic system for dependent fields
+  - [x] 4.7 Add import/export functionality for configuration templates
+  - [x] 4.8 Implement conditional logic system for dependent fields
 
 - [ ] 5.0 Case Study Generation Interface
-  - [ ] 5.1 Create step-by-step generation wizard interface
-  - [ ] 5.2 Implement structured input form with dynamic field rendering
+  - [x] 5.1 Create step-by-step generation wizard interface
+  - [x] 5.2 Implement structured input form with dynamic field rendering
   - [ ] 5.3 Build free-form prompt area with AI-powered suggestions
   - [ ] 5.4 Create generation options interface (full/outline/questions only)
   - [ ] 5.5 Implement content structure configuration (elements to include)

@@ -533,7 +533,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
     }
   };
 
-  const handleExportTemplate = () => {
+  const handleExportSelectedTemplates = () => {
     if (selectedTemplateIds.length === 0) {
       setError('Please select templates to export');
       return;
@@ -627,7 +627,7 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
                 <Button
                   variant="outlined"
                   startIcon={<DownloadIcon />}
-                  onClick={handleExportTemplate}
+                  onClick={handleExportSelectedTemplates}
                   disabled={selectedTemplateIds.length === 0}
                   size="small"
                 >
