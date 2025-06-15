@@ -502,3 +502,107 @@ impl std::fmt::Display for DataType {
         }
     }
 }
+
+/// Prompt template stored in database
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct PromptTemplate {
+    pub id: i64,
+    pub template_id: String, // UUID for external reference
+    pub name: String,
+    pub description: String,
+    pub category: String,
+    pub system_prompt: Option<String>,
+    pub user_prompt: String,
+    pub variables: String, // JSON array of TemplateVariable
+    pub example_values: Option<String>, // JSON object
+    pub tags: Option<String>, // JSON array
+    pub version: String,
+    pub is_active: bool,
+    pub is_system_template: bool, // Whether it's a built-in template
+    pub created_by: Option<i64>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+/// New prompt template for creation
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NewPromptTemplate {
+    pub template_id: String,
+    pub name: String,
+    pub description: String,
+    pub category: String,
+    pub system_prompt: Option<String>,
+    pub user_prompt: String,
+    pub variables: String, // JSON array
+    pub example_values: Option<String>, // JSON object
+    pub tags: Option<String>, // JSON array
+    pub version: Option<String>,
+    pub is_active: Option<bool>,
+    pub is_system_template: Option<bool>,
+    pub created_by: Option<i64>,
+}
+
+/// Update data for prompt templates
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdatePromptTemplate {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub category: Option<String>,
+    pub system_prompt: Option<String>,
+    pub user_prompt: Option<String>,
+    pub variables: Option<String>,
+    pub example_values: Option<String>,
+    pub tags: Option<String>,
+    pub version: Option<String>,
+    pub is_active: Option<bool>,
+}
+
+/// Template usage statistics
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct TemplateUsage {
+    pub id: i64,
+    pub template_id: String,
+    pub user_id: Option<i64>,
+    pub generation_id: Option<i64>, // Link to generation_history
+    pub variables_used: Option<String>, // JSON object
+    pub success: bool,
+    pub error_message: Option<String>,
+    pub execution_time_ms: Option<i64>,
+    pub created_at: DateTime<Utc>,
+}
+
+/// New template usage record
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NewTemplateUsage {
+    pub template_id: String,
+    pub user_id: Option<i64>,
+    pub generation_id: Option<i64>,
+    pub variables_used: Option<String>,
+    pub success: bool,
+    pub error_message: Option<String>,
+    pub execution_time_ms: Option<i64>,
+}
+
+/// Template categories with metadata
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct TemplateCategory {
+    pub id: i64,
+    pub name: String,
+    pub description: Option<String>,
+    pub icon: Option<String>,
+    pub color: Option<String>,
+    pub sort_order: i64,
+    pub is_active: bool,
+    pub created_at: DateTime<Utc>,
+}
+
+/// New template category
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NewTemplateCategory {
+    pub name: String,
+    pub description: Option<String>,
+    pub icon: Option<String>,
+    pub color: Option<String>,
+    pub sort_order: Option<i64>,
+    pub is_active: Option<bool>,
+}

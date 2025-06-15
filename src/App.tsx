@@ -15,6 +15,12 @@ import {
   Avatar,
   Stack,
   Alert,
+  Drawer,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  ListItemButton,
 } from "@mui/material";
 import {
   Lightbulb as LightbulbIcon,
@@ -22,13 +28,26 @@ import {
   Psychology as PsychologyIcon,
   FileUpload as FileUploadIcon,
   FileDownload as FileDownloadIcon,
+  Menu as MenuIcon,
+  Home as HomeIcon,
+  Settings as SettingsIcon,
+  QuestionAnswer as QuestionIcon,
+  Article as ArticleIcon,
+  Build as ConfigIcon,
 } from "@mui/icons-material";
 import { useTheme } from "./theme/ThemeProvider";
 import { useFileSystem } from "./hooks/useFileSystem";
+import { AIConfigPage } from "./components/ai-config/AIConfigPage";
+import { FormDemo } from "./components/forms/FormDemo";
+import { ValidationDemo } from "./components/forms/ValidationDemo";
+import { CaseStudyGenerator } from "./components/frameworks/CaseStudyGenerator";
+// import { ConfigurationManager } from "./components/configuration";
 
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
+  const [currentPage, setCurrentPage] = useState<'home' | 'ai-config' | 'case-studies' | 'questions' | 'configuration' | 'validation' | 'generator'>('home');
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const { mode, toggleTheme } = useTheme();
   const { 
     importCaseStudy, 
@@ -71,11 +90,151 @@ File system integration is working correctly.
     }
   };
 
+  const renderCurrentPage = () => {
+    switch (currentPage) {
+      case 'ai-config':
+        return <AIConfigPage />;
+      case 'configuration':
+        return <FormDemo />;
+      case 'validation':
+        return <ValidationDemo />;
+      case 'generator':
+        return <CaseStudyGenerator />;
+      case 'home':
+      default:
+        return renderHomePage();
+    }
+  };
+
+  const renderHomePage = () => (
+    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+      <Stack spacing={4}>
+        {/* Welcome Section */}
+        <Card elevation={2}>
+          <CardContent sx={{ textAlign: 'center', py: 4 }}>
+            <Typography variant="h2" component="h1" gutterBottom color="primary">
+              Welcome to Case Crafter
+            </Typography>
+            <Typography variant="h6" color="text.secondary" paragraph>
+              Intelligent case study generator for educational purposes
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
+              Generate realistic business case studies, assessment questions, and learning materials 
+              tailored to specific domains and educational objectives using AI.
+            </Typography>
+          </CardContent>
+        </Card>
+
+        {/* Demo Interaction */}
+        <Card elevation={2}>
+          <CardContent>
+            <Typography variant="h5" gutterBottom>
+              Test Tauri Integration
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              This demonstrates the connection between the React frontend and Rust backend.
+            </Typography>
+            
+            <Box component="form" onSubmit={(e) => { e.preventDefault(); greet(); }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="start">
+                <TextField
+                  fullWidth
+                  id="greet-input"
+                  label="Enter your name"
+                  variant="outlined"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Type a name here..."
+                />
+                <Button 
+                  type="submit" 
+                  variant="contained" 
+                  size="large"
+                  sx={{ minWidth: 120 }}
+                >
+                  Greet
+                </Button>
+              </Stack>
+            </Box>
+
+            {greetMsg && (
+              <Alert severity="success" sx={{ mt: 3 }}>
+                {greetMsg}
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* File System Demo */}
+        <Card elevation={2}>
+          <CardContent>
+            <Typography variant="h5" gutterBottom>
+              File System Operations
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Test the file import/export functionality with native desktop dialogs.
+            </Typography>
+            
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <Button 
+                variant="outlined" 
+                startIcon={<FileUploadIcon />}
+                onClick={handleImport}
+                disabled={fileLoading}
+              >
+                Import File
+              </Button>
+              <Button 
+                variant="outlined" 
+                startIcon={<FileDownloadIcon />}
+                onClick={handleExport}
+                disabled={fileLoading}
+              >
+                Export Sample
+              </Button>
+            </Stack>
+
+            {fileError && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {fileError}
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Features Preview */}
+        <Card elevation={2}>
+          <CardContent>
+            <Typography variant="h5" gutterBottom>
+              Coming Soon
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              • AI-powered case study generation<br />
+              • Multi-domain support (Business, Technology, Healthcare, Science)<br />
+              • Assessment question creation<br />
+              • Learning analytics and progress tracking<br />
+              • Offline-first architecture with local AI processing
+            </Typography>
+          </CardContent>
+        </Card>
+      </Stack>
+    </Container>
+  );
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       {/* Header */}
       <AppBar position="static" elevation={1}>
         <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            onClick={() => setDrawerOpen(true)}
+            edge="start"
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
           <Avatar sx={{ mr: 2, bgcolor: 'primary.main' }}>
             <PsychologyIcon />
           </Avatar>
@@ -88,119 +247,87 @@ File system integration is working correctly.
         </Toolbar>
       </AppBar>
 
+      {/* Navigation Drawer */}
+      <Drawer
+        anchor="left"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+      >
+        <Box
+          sx={{ width: 250 }}
+          role="presentation"
+          onClick={() => setDrawerOpen(false)}
+          onKeyDown={() => setDrawerOpen(false)}
+        >
+          <List>
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => setCurrentPage('home')}>
+                <ListItemIcon>
+                  <HomeIcon />
+                </ListItemIcon>
+                <ListItemText primary="Home" />
+              </ListItemButton>
+            </ListItem>
+            
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => setCurrentPage('ai-config')}>
+                <ListItemIcon>
+                  <SettingsIcon />
+                </ListItemIcon>
+                <ListItemText primary="AI Configuration" />
+              </ListItemButton>
+            </ListItem>
+            
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => setCurrentPage('generator')}>
+                <ListItemIcon>
+                  <ArticleIcon />
+                </ListItemIcon>
+                <ListItemText primary="Case Study Generator" />
+              </ListItemButton>
+            </ListItem>
+            
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => setCurrentPage('case-studies')}>
+                <ListItemIcon>
+                  <ArticleIcon />
+                </ListItemIcon>
+                <ListItemText primary="Case Studies" />
+              </ListItemButton>
+            </ListItem>
+            
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => setCurrentPage('configuration')}>
+                <ListItemIcon>
+                  <ConfigIcon />
+                </ListItemIcon>
+                <ListItemText primary="Dynamic Forms Demo" />
+              </ListItemButton>
+            </ListItem>
+            
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => setCurrentPage('validation')}>
+                <ListItemIcon>
+                  <QuestionIcon />
+                </ListItemIcon>
+                <ListItemText primary="Validation Demo" />
+              </ListItemButton>
+            </ListItem>
+            
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => setCurrentPage('questions')}>
+                <ListItemIcon>
+                  <QuestionIcon />
+                </ListItemIcon>
+                <ListItemText primary="Questions" />
+              </ListItemButton>
+            </ListItem>
+          </List>
+        </Box>
+      </Drawer>
+
       {/* Main Content */}
-      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-        <Stack spacing={4}>
-          {/* Welcome Section */}
-          <Card elevation={2}>
-            <CardContent sx={{ textAlign: 'center', py: 4 }}>
-              <Typography variant="h2" component="h1" gutterBottom color="primary">
-                Welcome to Case Crafter
-              </Typography>
-              <Typography variant="h6" color="text.secondary" paragraph>
-                Intelligent case study generator for educational purposes
-              </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
-                Generate realistic business case studies, assessment questions, and learning materials 
-                tailored to specific domains and educational objectives using AI.
-              </Typography>
-            </CardContent>
-          </Card>
-
-          {/* Demo Interaction */}
-          <Card elevation={2}>
-            <CardContent>
-              <Typography variant="h5" gutterBottom>
-                Test Tauri Integration
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                This demonstrates the connection between the React frontend and Rust backend.
-              </Typography>
-              
-              <Box component="form" onSubmit={(e) => { e.preventDefault(); greet(); }}>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="start">
-                  <TextField
-                    fullWidth
-                    id="greet-input"
-                    label="Enter your name"
-                    variant="outlined"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Type a name here..."
-                  />
-                  <Button 
-                    type="submit" 
-                    variant="contained" 
-                    size="large"
-                    sx={{ minWidth: 120 }}
-                  >
-                    Greet
-                  </Button>
-                </Stack>
-              </Box>
-
-              {greetMsg && (
-                <Alert severity="success" sx={{ mt: 3 }}>
-                  {greetMsg}
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* File System Demo */}
-          <Card elevation={2}>
-            <CardContent>
-              <Typography variant="h5" gutterBottom>
-                File System Operations
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Test the file import/export functionality with native desktop dialogs.
-              </Typography>
-              
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <Button 
-                  variant="outlined" 
-                  startIcon={<FileUploadIcon />}
-                  onClick={handleImport}
-                  disabled={fileLoading}
-                >
-                  Import File
-                </Button>
-                <Button 
-                  variant="outlined" 
-                  startIcon={<FileDownloadIcon />}
-                  onClick={handleExport}
-                  disabled={fileLoading}
-                >
-                  Export Sample
-                </Button>
-              </Stack>
-
-              {fileError && (
-                <Alert severity="error" sx={{ mt: 2 }}>
-                  {fileError}
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Features Preview */}
-          <Card elevation={2}>
-            <CardContent>
-              <Typography variant="h5" gutterBottom>
-                Coming Soon
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                • AI-powered case study generation<br />
-                • Multi-domain support (Business, Technology, Healthcare, Science)<br />
-                • Assessment question creation<br />
-                • Learning analytics and progress tracking<br />
-                • Offline-first architecture with local AI processing
-              </Typography>
-            </CardContent>
-          </Card>
-        </Stack>
-      </Container>
+      {renderCurrentPage()}
     </Box>
   );
 }

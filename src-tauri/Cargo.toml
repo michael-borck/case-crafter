@@ -49,6 +49,7 @@ async-trait = "0.1"
 futures = "0.3"
 handlebars = "5.1"
 regex = "1.0"
+url = "2.3"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

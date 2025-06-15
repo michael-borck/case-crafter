@@ -6,6 +6,7 @@ use tauri::AppHandle;
 
 use super::migrations::{MigrationManager, MigrationError};
 
+#[derive(Clone)]
 pub struct DatabaseManager {
     pool: SqlitePool,
 }

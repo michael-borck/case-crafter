@@ -26,6 +26,9 @@ pub enum AIError {
     #[error("Invalid request: {0}")]
     InvalidRequest(String),
 
+    #[error("Validation error: {0}")]
+    ValidationError(String),
+
     #[error("Parsing error: {0}")]
     ParsingError(String),
 
@@ -79,6 +82,7 @@ impl AIError {
             AIError::AuthenticationError(_) => "authentication",
             AIError::RateLimitError(_) => "rate_limit",
             AIError::InvalidRequest(_) => "validation",
+            AIError::ValidationError(_) => "validation",
             AIError::ParsingError(_) => "parsing",
             AIError::TemplateError(_) => "template",
             AIError::ModelNotFound(_) => "model",
@@ -103,6 +107,7 @@ impl AIError {
             AIError::QuotaExceeded(_) => "AI provider quota exceeded. Please check your usage limits.".to_string(),
             AIError::ModelNotFound(_) => "The requested AI model is not available. Please try a different model.".to_string(),
             AIError::TimeoutError(_) => "AI request timed out. Please try again.".to_string(),
+            AIError::ValidationError(msg) => format!("Validation failed: {}", msg),
             _ => "An unexpected error occurred while processing your AI request.".to_string(),
         }
     }
