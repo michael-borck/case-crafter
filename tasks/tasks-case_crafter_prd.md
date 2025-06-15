@@ -78,6 +78,7 @@ Based on the Case Crafter PRD (docs/case_crafter_prd.md)
 - `src/components/generation/AIPromptArea.tsx` - AI-powered prompt builder with suggestions, templates, and history management (created)
 - `src/hooks/useAIPromptSuggestions.ts` - React hook for managing AI prompt suggestions, templates, and analysis (created)
 - `src/components/generation/PromptEnhancementDialog.tsx` - Advanced dialog for AI-powered prompt analysis and enhancement (created)
+- `src/components/generation/ContentStructureSelector.tsx` - Comprehensive content structure configuration with element selection and customization (created)
 - `src/components/Dashboard.tsx` - Main dashboard interface component
 - `src/components/CaseStudyGenerator/` - Case study generation interface components
 - `src/components/ConfigurationManager/` - Administrative configuration interface
@@ -141,7 +142,7 @@ Based on the Case Crafter PRD (docs/case_crafter_prd.md)
   - [x] 5.2 Implement structured input form with dynamic field rendering
   - [x] 5.3 Build free-form prompt area with AI-powered suggestions
   - [x] 5.4 Create generation options interface (full/outline/questions only)
-  - [ ] 5.5 Implement content structure configuration (elements to include)
+  - [x] 5.5 Implement content structure configuration (elements to include)
   - [ ] 5.6 Add real-time preview and editing capabilities
   - [ ] 5.7 Create regeneration system for selective content updates
   - [ ] 5.8 Implement save/load functionality for generation sessions

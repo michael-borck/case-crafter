@@ -59,6 +59,7 @@ import { FrameworkMapper } from '../frameworks/FrameworkMapper';
 import { DynamicForm } from '../forms/DynamicForm';
 import { StructuredInputForm } from './StructuredInputForm';
 import { AIPromptArea } from './AIPromptArea';
+import { ContentStructureSelector, ContentStructureConfig } from './ContentStructureSelector';
 import { ConfigurationSchema, ValidationResults } from '../../types/configuration';
 
 // Enhanced wizard step definitions
@@ -141,6 +142,14 @@ const wizardSteps: WizardStep[] = [
     helpText: 'Use AI-powered suggestions to craft a comprehensive prompt',
   },
   {
+    id: 'structure',
+    label: 'Content Structure',
+    description: 'Configure which elements to include',
+    icon: <SettingsIcon />,
+    estimatedMinutes: 5,
+    helpText: 'Select specific content elements and customize their details',
+  },
+  {
     id: 'options',
     label: 'Generation Options',
     description: 'Configure output format and style',
@@ -211,6 +220,12 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
   });
 
   const [aiPrompt, setAiPrompt] = useState<string>('');
+  const [contentStructure, setContentStructure] = useState<ContentStructureConfig>({
+    elements: [],
+    totalEstimatedLength: 0,
+    includedCategories: [],
+    customInstructions: '',
+  });
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -225,6 +240,12 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
       setGeneratedSchema(initialState.generatedSchema);
       setFormData(initialState.formData || {});
       setAiPrompt(initialState.aiPrompt || '');
+      setContentStructure(initialState.contentStructure || {
+        elements: [],
+        totalEstimatedLength: 0,
+        includedCategories: [],
+        customInstructions: '',
+      });
     }
   }, [initialState]);
 
@@ -242,14 +263,16 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
         return formValidation.is_valid;
       case 4: // Prompt
         return aiPrompt.trim().length >= 50; // Require meaningful prompt
-      case 5: // Options
+      case 5: // Structure
+        return contentStructure.elements.filter(el => el.isEnabled).length > 0; // At least one element selected
+      case 6: // Options
         return true; // Options are always valid (have defaults)
-      case 6: // Preview
+      case 7: // Preview
         return true; // Preview is just for review
       default:
         return false;
     }
-  }, [contentPreferences, selectedFramework, generatedSchema, formValidation, aiPrompt]);
+  }, [contentPreferences, selectedFramework, generatedSchema, formValidation, aiPrompt, contentStructure]);
 
   // Update step validation when dependencies change
   useEffect(() => {
@@ -307,11 +330,12 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
         generatedSchema,
         formData,
         aiPrompt,
+        contentStructure,
         lastSaved: new Date().toISOString(),
       };
       onSave(saveState);
     }
-  }, [wizardState, contentPreferences, selectedFramework, generationOptions, generatedSchema, formData, aiPrompt, onSave]);
+  }, [wizardState, contentPreferences, selectedFramework, generationOptions, generatedSchema, formData, aiPrompt, contentStructure, onSave]);
 
   // Auto-save every 30 seconds
   useEffect(() => {
@@ -528,6 +552,25 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
         onTemplateSelect={(template) => {
           console.log('Template selected:', template);
         }}
+      />
+    </Box>
+  );
+
+  const renderStructureStep = () => (
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        Content Structure Configuration
+      </Typography>
+      <Typography variant="body2" color="text.secondary" paragraph>
+        Select and customize the specific elements to include in your case study.
+      </Typography>
+
+      <ContentStructureSelector
+        value={contentStructure}
+        onChange={setContentStructure}
+        outputType={generationOptions.outputType}
+        framework={selectedFramework?.name}
+        disabled={false}
       />
     </Box>
   );
@@ -854,7 +897,7 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
 
       {/* Summary cards */}
       <Grid container spacing={2}>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={3}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="subtitle2" gutterBottom>Framework</Typography>
@@ -864,7 +907,7 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={3}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="subtitle2" gutterBottom>Output Type</Typography>
@@ -874,12 +917,25 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={3}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="subtitle2" gutterBottom>AI Prompt</Typography>
               <Typography variant="body2">
                 {aiPrompt ? `${aiPrompt.substring(0, 50)}...` : 'No prompt created'}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Card variant="outlined">
+            <CardContent>
+              <Typography variant="subtitle2" gutterBottom>Content Structure</Typography>
+              <Typography variant="body2">
+                {contentStructure.elements.filter(el => el.isEnabled).length} elements selected
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                ~{contentStructure.totalEstimatedLength} words
               </Typography>
             </CardContent>
           </Card>
@@ -905,6 +961,7 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
                     options: generationOptions,
                     data: formData,
                     prompt: aiPrompt,
+                    structure: contentStructure,
                     preferences: contentPreferences,
                   });
                 }
@@ -935,8 +992,9 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
       case 2: return renderConfigurationStep();
       case 3: return renderContentStep();
       case 4: return renderPromptStep();
-      case 5: return renderOptionsStep();
-      case 6: return renderPreviewStep();
+      case 5: return renderStructureStep();
+      case 6: return renderOptionsStep();
+      case 7: return renderPreviewStep();
       default: return <Typography>Unknown step</Typography>;
     }
   };
