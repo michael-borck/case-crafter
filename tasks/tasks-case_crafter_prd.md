@@ -168,12 +168,12 @@ Based on the Case Crafter PRD (docs/case_crafter_prd.md)
   - [x] 6.7 Add content export functionality (PDF, Word, HTML, Markdown)
   - [-] 6.8 Implement content analytics and usage tracking (skipped - limited value for single user)
 
-- [ ] 7.0 Assessment and Analytics System
-  - [ ] 7.1 Create intelligent assessment question generation
-  - [ ] 7.2 Implement multiple question types (MC, short answer, essay, analysis)
-  - [ ] 7.3 Build automated rubric generation system
+- [x] 7.0 Assessment and Analytics System
+  - [x] 7.1 Create intelligent assessment question generation
+  - [x] 7.2 Implement multiple question types (MC, short answer, essay, analysis)
+  - [x] 7.3 Build automated rubric generation system
   - [-] 7.4 Create student progress tracking and analytics (skipped - lecturer tool, not student-facing)
   - [-] 7.5 Implement content effectiveness analytics (skipped - limited value for single user)
   - [-] 7.6 Build recommendation engine for content improvements (skipped - single user context)
-  - [ ] 7.7 Create basic readability and content analytics dashboard
+  - [x] 7.7 Create basic readability and content analytics dashboard
   - [-] 7.8 Add data visualization components for insights (skipped - overengineering for single user)

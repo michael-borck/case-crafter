@@ -36,6 +36,8 @@ import {
   AccountTree as ConditionalIcon,
   LibraryBooks as LibraryIcon,
   History as HistoryIcon,
+  Quiz as AssessmentIcon,
+  Analytics as AnalysisIcon,
 } from "@mui/icons-material";
 import { useTheme } from "./theme/ThemeProvider";
 import { AIConfigPage } from "./components/ai-config/AIConfigPage";
@@ -45,12 +47,14 @@ import { ConditionalLogicDemo } from "./components/forms/ConditionalLogicDemo";
 import { CaseStudyWizard } from "./components/generation/CaseStudyWizard";
 import { TemplateManager, TemplateStore, TemplateBuilder } from "./components/configuration";
 import { ContentLibrary, CategoryManager, RevisionHistory } from "./components/content";
+import { QuestionGenerator } from "./components/assessment";
+import { ContentAnalytics } from "./components/analytics";
 
 const SIDEBAR_WIDTH = 280;
 const SIDEBAR_COLLAPSED_WIDTH = 72;
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'ai-config' | 'case-studies' | 'questions' | 'configuration' | 'validation' | 'conditional' | 'generator' | 'templates' | 'template-store' | 'template-builder' | 'categories' | 'revisions'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'ai-config' | 'case-studies' | 'questions' | 'question-generator' | 'analytics' | 'configuration' | 'validation' | 'conditional' | 'generator' | 'templates' | 'template-store' | 'template-builder' | 'categories' | 'revisions'>('home');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { mode, toggleTheme } = useTheme();
 
@@ -78,6 +82,78 @@ function App() {
         return <CategoryManager />;
       case 'revisions':
         return <RevisionHistory />;
+      case 'question-generator':
+        return <QuestionGenerator 
+          contentItem={{
+            id: 'demo',
+            title: 'Sample Case Study',
+            description: 'A sample case study for demonstration purposes',
+            content: 'This is sample content for generating assessment questions...',
+            type: 'case_study',
+            category: 'business',
+            tags: ['strategy', 'analysis', 'decision-making'],
+            difficulty: 'intermediate',
+            estimatedTime: 60,
+            wordCount: 1500,
+            rating: 4.5,
+            ratingCount: 10,
+            framework: 'SWOT Analysis',
+            author: { id: 'demo', name: 'Demo Author' },
+            metadata: {
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              accessCount: 0,
+              isPublic: true,
+              isFeatured: false,
+              isBookmarked: false,
+              downloadCount: 0,
+              shareCount: 0,
+              version: '1.0',
+              language: 'English',
+              industry: ['Technology'],
+              learningObjectives: ['Understand strategic analysis'],
+              prerequisites: [],
+            },
+            searchableContent: 'Sample case study for demonstration purposes. This is sample content for generating assessment questions using AI-powered tools. Strategy analysis decision-making business framework SWOT.',
+          }}
+        />;
+      case 'analytics':
+        return <ContentAnalytics 
+          contentItems={[
+            {
+              id: 'demo',
+              title: 'Sample Case Study',
+              description: 'A sample case study for demonstration purposes',
+              content: 'This is sample content for generating assessment questions. Digital transformation has become a critical imperative for businesses across all industries. Companies must adapt to rapidly changing technology landscapes while maintaining operational efficiency. The integration of artificial intelligence, cloud computing, and data analytics presents both opportunities and challenges. Organizations need to develop comprehensive strategies that balance innovation with risk management. Successful digital transformation requires strong leadership, employee engagement, and a clear vision for the future.',
+              type: 'case_study',
+              category: 'business',
+              tags: ['strategy', 'analysis', 'decision-making'],
+              difficulty: 'intermediate',
+              estimatedTime: 60,
+              wordCount: 500,
+              rating: 4.5,
+              ratingCount: 10,
+              framework: 'SWOT Analysis',
+              author: { id: 'demo', name: 'Demo Author' },
+              metadata: {
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                accessCount: 0,
+                isPublic: true,
+                isFeatured: false,
+                isBookmarked: false,
+                downloadCount: 0,
+                shareCount: 0,
+                version: '1.0',
+                language: 'English',
+                industry: ['Technology'],
+                learningObjectives: ['Understand strategic analysis'],
+                prerequisites: [],
+              },
+              searchableContent: 'Sample case study for demonstration purposes. Digital transformation artificial intelligence cloud computing data analytics innovation risk management leadership employee engagement strategic planning.',
+            }
+          ]}
+        />;
       case 'home':
       default:
         return renderHomePage();
@@ -113,6 +189,13 @@ function App() {
       action: () => setCurrentPage('case-studies'),
       color: 'info.main',
     },
+    {
+      title: 'Generate Questions',
+      description: 'Create intelligent assessment questions from your content',
+      icon: <AssessmentIcon sx={{ fontSize: 40 }} />,
+      action: () => setCurrentPage('question-generator'),
+      color: 'warning.main',
+    },
   ];
 
   const renderHomePage = () => (
@@ -142,7 +225,7 @@ function App() {
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr 1fr 1fr' },
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(auto-fit, minmax(250px, 1fr))' },
               gap: 3,
             }}
           >
@@ -297,6 +380,8 @@ function App() {
     { id: 'case-studies', label: 'Content Library', icon: <LibraryIcon />, category: 'content' },
     { id: 'categories', label: 'Categories & Tags', icon: <ConfigIcon />, category: 'content' },
     { id: 'revisions', label: 'Revision History', icon: <HistoryIcon />, category: 'content' },
+    { id: 'question-generator', label: 'Question Generator', icon: <AssessmentIcon />, category: 'assessment' },
+    { id: 'analytics', label: 'Content Analytics', icon: <AnalysisIcon />, category: 'assessment' },
     { id: 'templates', label: 'Template Manager', icon: <TemplateIcon />, category: 'templates' },
     { id: 'template-store', label: 'Template Store', icon: <StoreIcon />, category: 'templates' },
     { id: 'template-builder', label: 'Template Builder', icon: <BuilderIcon />, category: 'templates' },
@@ -422,6 +507,8 @@ function App() {
           {renderNavCategory('Main', navigationItems.filter(item => item.category === 'main'))}
           <Divider sx={{ my: 1 }} />
           {renderNavCategory('Content', navigationItems.filter(item => item.category === 'content'))}
+          <Divider sx={{ my: 1 }} />
+          {renderNavCategory('Assessment', navigationItems.filter(item => item.category === 'assessment'))}
           <Divider sx={{ my: 1 }} />
           {renderNavCategory('Templates', navigationItems.filter(item => item.category === 'templates'))}
           <Divider sx={{ my: 1 }} />
