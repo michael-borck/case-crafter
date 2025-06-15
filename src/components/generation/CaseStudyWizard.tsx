@@ -533,108 +533,314 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
   );
 
   const renderOptionsStep = () => (
-    <Card variant="outlined">
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Generation Options
-        </Typography>
-        <Typography variant="body2" color="text.secondary" paragraph>
-          Configure how the AI should generate your case study.
-        </Typography>
+    <Stack spacing={3}>
+      <Typography variant="h6" gutterBottom>
+        Generation Options
+      </Typography>
+      <Typography variant="body2" color="text.secondary" paragraph>
+        Configure the type and style of content the AI should generate for your case study.
+      </Typography>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel>Output Type</InputLabel>
-              <Select
-                value={generationOptions.outputType}
-                onChange={(e) => setGenerationOptions(prev => ({
-                  ...prev,
-                  outputType: e.target.value as any
-                }))}
-                label="Output Type"
+      {/* Output Type Selection */}
+      <Card variant="outlined">
+        <CardContent>
+          <Typography variant="subtitle1" gutterBottom>
+            Output Type
+          </Typography>
+          <Typography variant="body2" color="text.secondary" paragraph>
+            Choose what type of content to generate based on your teaching needs.
+          </Typography>
+          
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={4}>
+              <Card 
+                variant={generationOptions.outputType === 'full' ? 'elevation' : 'outlined'}
+                sx={{ 
+                  cursor: 'pointer',
+                  border: generationOptions.outputType === 'full' ? '2px solid' : '1px solid',
+                  borderColor: generationOptions.outputType === 'full' ? 'primary.main' : 'divider',
+                }}
+                onClick={() => setGenerationOptions(prev => ({ ...prev, outputType: 'full' }))}
               >
-                <MenuItem value="full">Full Case Study</MenuItem>
-                <MenuItem value="outline">Outline Only</MenuItem>
-                <MenuItem value="questions_only">Questions Only</MenuItem>
-              </Select>
-              <FormHelperText>Choose the level of detail for output</FormHelperText>
-            </FormControl>
-          </Grid>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <BusinessIcon color="primary" sx={{ mr: 1 }} />
+                    <Typography variant="h6" color="primary">
+                      Full Case Study
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" paragraph>
+                    Complete case study with background, analysis, and conclusions.
+                  </Typography>
+                  <Stack direction="row" spacing={1} flexWrap="wrap">
+                    <Chip label="Narrative" size="small" />
+                    <Chip label="Analysis" size="small" />
+                    <Chip label="Exhibits" size="small" />
+                    <Chip label="Teaching Notes" size="small" />
+                  </Stack>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    Best for: In-depth learning and comprehensive analysis
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
 
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel>Content Length</InputLabel>
-              <Select
-                value={generationOptions.wordCount}
-                onChange={(e) => setGenerationOptions(prev => ({
-                  ...prev,
-                  wordCount: e.target.value as any
-                }))}
-                label="Content Length"
+            <Grid item xs={12} md={4}>
+              <Card 
+                variant={generationOptions.outputType === 'outline' ? 'elevation' : 'outlined'}
+                sx={{ 
+                  cursor: 'pointer',
+                  border: generationOptions.outputType === 'outline' ? '2px solid' : '1px solid',
+                  borderColor: generationOptions.outputType === 'outline' ? 'primary.main' : 'divider',
+                }}
+                onClick={() => setGenerationOptions(prev => ({ ...prev, outputType: 'outline' }))}
               >
-                <MenuItem value="short">Short (500-1000 words)</MenuItem>
-                <MenuItem value="medium">Medium (1000-2000 words)</MenuItem>
-                <MenuItem value="long">Long (2000+ words)</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <EditIcon color="primary" sx={{ mr: 1 }} />
+                    <Typography variant="h6" color="primary">
+                      Outline Only
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" paragraph>
+                    Structured outline with key points and discussion topics.
+                  </Typography>
+                  <Stack direction="row" spacing={1} flexWrap="wrap">
+                    <Chip label="Key Points" size="small" />
+                    <Chip label="Discussion Topics" size="small" />
+                    <Chip label="Framework" size="small" />
+                  </Stack>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    Best for: Quick reference and guided discussions
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
 
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel>Writing Tone</InputLabel>
-              <Select
-                value={generationOptions.tone}
-                onChange={(e) => setGenerationOptions(prev => ({
-                  ...prev,
-                  tone: e.target.value as any
-                }))}
-                label="Writing Tone"
+            <Grid item xs={12} md={4}>
+              <Card 
+                variant={generationOptions.outputType === 'questions_only' ? 'elevation' : 'outlined'}
+                sx={{ 
+                  cursor: 'pointer',
+                  border: generationOptions.outputType === 'questions_only' ? '2px solid' : '1px solid',
+                  borderColor: generationOptions.outputType === 'questions_only' ? 'primary.main' : 'divider',
+                }}
+                onClick={() => setGenerationOptions(prev => ({ ...prev, outputType: 'questions_only' }))}
               >
-                <MenuItem value="academic">Academic</MenuItem>
-                <MenuItem value="professional">Professional</MenuItem>
-                <MenuItem value="conversational">Conversational</MenuItem>
-              </Select>
-            </FormControl>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <PsychologyIcon color="primary" sx={{ mr: 1 }} />
+                    <Typography variant="h6" color="primary">
+                      Questions Only
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" paragraph>
+                    Focused set of analysis questions and discussion prompts.
+                  </Typography>
+                  <Stack direction="row" spacing={1} flexWrap="wrap">
+                    <Chip label="Analysis Questions" size="small" />
+                    <Chip label="Critical Thinking" size="small" />
+                    <Chip label="Discussion" size="small" />
+                  </Stack>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    Best for: Student-driven analysis and active learning
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
           </Grid>
+        </CardContent>
+      </Card>
 
-          <Grid item xs={12}>
-            <Typography variant="subtitle2" gutterBottom>
-              Include Additional Elements
-            </Typography>
-            <Stack direction="row" spacing={2} flexWrap="wrap">
-              <Chip
-                label="Assessment Questions"
-                clickable
-                color={generationOptions.includeQuestions ? "primary" : "default"}
+      {/* Content Configuration */}
+      <Card variant="outlined">
+        <CardContent>
+          <Typography variant="subtitle1" gutterBottom>
+            Content Configuration
+          </Typography>
+          
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Content Length</InputLabel>
+                <Select
+                  value={generationOptions.wordCount}
+                  onChange={(e) => setGenerationOptions(prev => ({
+                    ...prev,
+                    wordCount: e.target.value as any
+                  }))}
+                  label="Content Length"
+                >
+                  <MenuItem value="short">Short (500-1000 words)</MenuItem>
+                  <MenuItem value="medium">Medium (1000-2000 words)</MenuItem>
+                  <MenuItem value="long">Long (2000+ words)</MenuItem>
+                </Select>
+                <FormHelperText>
+                  Recommended length for {generationOptions.outputType === 'full' ? 'full case studies' : 
+                    generationOptions.outputType === 'outline' ? 'structured outlines' : 'question sets'}
+                </FormHelperText>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Writing Tone</InputLabel>
+                <Select
+                  value={generationOptions.tone}
+                  onChange={(e) => setGenerationOptions(prev => ({
+                    ...prev,
+                    tone: e.target.value as any
+                  }))}
+                  label="Writing Tone"
+                >
+                  <MenuItem value="academic">Academic</MenuItem>
+                  <MenuItem value="professional">Professional</MenuItem>
+                  <MenuItem value="conversational">Conversational</MenuItem>
+                </Select>
+                <FormHelperText>
+                  Adjust the writing style to match your audience
+                </FormHelperText>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Complexity Level</InputLabel>
+                <Select
+                  value={generationOptions.complexity}
+                  onChange={(e) => setGenerationOptions(prev => ({
+                    ...prev,
+                    complexity: e.target.value as any
+                  }))}
+                  label="Complexity Level"
+                >
+                  <MenuItem value="beginner">Beginner</MenuItem>
+                  <MenuItem value="intermediate">Intermediate</MenuItem>
+                  <MenuItem value="advanced">Advanced</MenuItem>
+                </Select>
+                <FormHelperText>
+                  Match the analytical depth to your students' level
+                </FormHelperText>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+
+      {/* Additional Elements */}
+      <Card variant="outlined">
+        <CardContent>
+          <Typography variant="subtitle1" gutterBottom>
+            Additional Elements
+          </Typography>
+          <Typography variant="body2" color="text.secondary" paragraph>
+            Select supplementary materials to include with your case study.
+          </Typography>
+          
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6} md={4}>
+              <Card 
+                variant="outlined" 
+                sx={{ 
+                  cursor: 'pointer',
+                  bgcolor: generationOptions.includeQuestions ? 'action.selected' : 'background.paper',
+                  borderColor: generationOptions.includeQuestions ? 'primary.main' : 'divider',
+                }}
                 onClick={() => setGenerationOptions(prev => ({
                   ...prev,
                   includeQuestions: !prev.includeQuestions
                 }))}
-              />
-              <Chip
-                label="Grading Rubric"
-                clickable
-                color={generationOptions.includeRubric ? "primary" : "default"}
+              >
+                <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                  <CheckCircleIcon 
+                    color={generationOptions.includeQuestions ? 'primary' : 'disabled'} 
+                    sx={{ mb: 1 }} 
+                  />
+                  <Typography variant="subtitle2">
+                    Assessment Questions
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Discussion and analysis questions
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={4}>
+              <Card 
+                variant="outlined" 
+                sx={{ 
+                  cursor: 'pointer',
+                  bgcolor: generationOptions.includeRubric ? 'action.selected' : 'background.paper',
+                  borderColor: generationOptions.includeRubric ? 'primary.main' : 'divider',
+                }}
                 onClick={() => setGenerationOptions(prev => ({
                   ...prev,
                   includeRubric: !prev.includeRubric
                 }))}
-              />
-              <Chip
-                label="Teaching Instructions"
-                clickable
-                color={generationOptions.includeInstructions ? "primary" : "default"}
+              >
+                <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                  <SchoolIcon 
+                    color={generationOptions.includeRubric ? 'primary' : 'disabled'} 
+                    sx={{ mb: 1 }} 
+                  />
+                  <Typography variant="subtitle2">
+                    Grading Rubric
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Assessment criteria and scoring
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={4}>
+              <Card 
+                variant="outlined" 
+                sx={{ 
+                  cursor: 'pointer',
+                  bgcolor: generationOptions.includeInstructions ? 'action.selected' : 'background.paper',
+                  borderColor: generationOptions.includeInstructions ? 'primary.main' : 'divider',
+                }}
                 onClick={() => setGenerationOptions(prev => ({
                   ...prev,
                   includeInstructions: !prev.includeInstructions
                 }))}
-              />
-            </Stack>
+              >
+                <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                  <InfoIcon 
+                    color={generationOptions.includeInstructions ? 'primary' : 'disabled'} 
+                    sx={{ mb: 1 }} 
+                  />
+                  <Typography variant="subtitle2">
+                    Teaching Instructions
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Instructor guidance and notes
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
           </Grid>
-        </Grid>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {/* Generation Preview */}
+      <Alert severity="info" sx={{ mt: 2 }}>
+        <Typography variant="body2">
+          <strong>Selected:</strong> {generationOptions.outputType === 'full' ? 'Full Case Study' : 
+            generationOptions.outputType === 'outline' ? 'Outline Only' : 'Questions Only'} • {' '}
+          {generationOptions.wordCount} length • {generationOptions.tone} tone • {generationOptions.complexity} complexity
+          {(generationOptions.includeQuestions || generationOptions.includeRubric || generationOptions.includeInstructions) && (
+            <span> • Plus: {[
+              generationOptions.includeQuestions && 'Questions',
+              generationOptions.includeRubric && 'Rubric', 
+              generationOptions.includeInstructions && 'Instructions'
+            ].filter(Boolean).join(', ')}</span>
+          )}
+        </Typography>
+      </Alert>
+    </Stack>
   );
 
   const renderPreviewStep = () => (

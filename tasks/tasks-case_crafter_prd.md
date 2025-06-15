@@ -140,7 +140,7 @@ Based on the Case Crafter PRD (docs/case_crafter_prd.md)
   - [x] 5.1 Create step-by-step generation wizard interface
   - [x] 5.2 Implement structured input form with dynamic field rendering
   - [x] 5.3 Build free-form prompt area with AI-powered suggestions
-  - [ ] 5.4 Create generation options interface (full/outline/questions only)
+  - [x] 5.4 Create generation options interface (full/outline/questions only)
   - [ ] 5.5 Implement content structure configuration (elements to include)
   - [ ] 5.6 Add real-time preview and editing capabilities
   - [ ] 5.7 Create regeneration system for selective content updates
