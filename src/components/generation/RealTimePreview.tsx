@@ -56,6 +56,7 @@ import {
   FullscreenExit as FullscreenExitIcon,
 } from '@mui/icons-material';
 import { ContentStructureConfig, ContentElement } from './ContentStructureSelector';
+import { SelectiveRegenerationManager } from './SelectiveRegenerationManager';
 import { BusinessFramework } from '../frameworks/FrameworkSelector';
 
 interface GeneratedContent {
@@ -233,10 +234,34 @@ export const RealTimePreview: React.FC<RealTimePreviewProps> = ({
     generatedContent.filter(content => content.status === 'completed').length
   , [generatedContent]);
 
+  // Handler for selective regeneration
+  const handleSelectiveRegenerate = useCallback(async (elementId: string, options: any) => {
+    // Simulate AI regeneration process
+    const element = contentStructure.elements.find(el => el.id === elementId);
+    if (!element) throw new Error('Element not found');
+
+    // Simulate delay
+    await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
+
+    // Generate new content
+    const newContent = generateSampleContent(element, framework, formData, aiPrompt);
+    return newContent;
+  }, [contentStructure, framework, formData, aiPrompt]);
+
+  // Convert generatedContent to the format expected by SelectiveRegenerationManager
+  const contentMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    generatedContent.forEach(content => {
+      map[content.elementId] = content.content;
+    });
+    return map;
+  }, [generatedContent]);
+
   const tabs = [
     { label: 'Preview', icon: <PreviewIcon /> },
     { label: 'Structure', icon: <TimelineIcon /> },
     { label: 'Analytics', icon: <TrendingUpIcon /> },
+    { label: 'Regeneration', icon: <RefreshIcon /> },
   ];
 
   const renderContentElement = (content: GeneratedContent) => {
@@ -639,6 +664,35 @@ export const RealTimePreview: React.FC<RealTimePreviewProps> = ({
 
       {activeTab === 1 && renderStructureView()}
       {activeTab === 2 && renderAnalyticsView()}
+      {activeTab === 3 && (
+        <SelectiveRegenerationManager
+          elements={contentStructure.elements}
+          generatedContent={contentMap}
+          onRegenerateContent={handleSelectiveRegenerate}
+          onUpdateContent={(elementId, newContent) => {
+            // Update the local generated content
+            setGeneratedContent(prev => prev.map(content => 
+              content.elementId === elementId 
+                ? { 
+                    ...content, 
+                    content: newContent, 
+                    wordCount: newContent.split(' ').length,
+                    lastUpdated: new Date(),
+                    version: content.version + 1
+                  }
+                : content
+            ));
+            
+            // Call the parent handler if provided
+            if (onContentEdit) {
+              onContentEdit(elementId, newContent);
+            }
+          }}
+          framework={framework?.name}
+          aiPrompt={aiPrompt}
+          disabled={disabled}
+        />
+      )}
 
       {/* Fullscreen Dialog */}
       <Dialog 

@@ -80,6 +80,7 @@ Based on the Case Crafter PRD (docs/case_crafter_prd.md)
 - `src/components/generation/PromptEnhancementDialog.tsx` - Advanced dialog for AI-powered prompt analysis and enhancement (created)
 - `src/components/generation/ContentStructureSelector.tsx` - Comprehensive content structure configuration with element selection and customization (created)
 - `src/components/generation/RealTimePreview.tsx` - Real-time content preview with editing capabilities and analytics dashboard (created)
+- `src/components/generation/SelectiveRegenerationManager.tsx` - Advanced selective content regeneration system with task management and quality control (created)
 - `src/components/Dashboard.tsx` - Main dashboard interface component
 - `src/components/CaseStudyGenerator/` - Case study generation interface components
 - `src/components/ConfigurationManager/` - Administrative configuration interface
@@ -145,7 +146,7 @@ Based on the Case Crafter PRD (docs/case_crafter_prd.md)
   - [x] 5.4 Create generation options interface (full/outline/questions only)
   - [x] 5.5 Implement content structure configuration (elements to include)
   - [x] 5.6 Add real-time preview and editing capabilities
-  - [ ] 5.7 Create regeneration system for selective content updates
+  - [x] 5.7 Create regeneration system for selective content updates
   - [ ] 5.8 Implement save/load functionality for generation sessions
 
 - [ ] 6.0 Content Management and Quality Control
