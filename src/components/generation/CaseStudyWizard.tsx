@@ -58,6 +58,7 @@ import { FrameworkSelector, BusinessFramework } from '../frameworks/FrameworkSel
 import { FrameworkMapper } from '../frameworks/FrameworkMapper';
 import { DynamicForm } from '../forms/DynamicForm';
 import { StructuredInputForm } from './StructuredInputForm';
+import { AIPromptArea } from './AIPromptArea';
 import { ConfigurationSchema, ValidationResults } from '../../types/configuration';
 
 // Enhanced wizard step definitions
@@ -132,6 +133,14 @@ const wizardSteps: WizardStep[] = [
     helpText: 'Enter the specific details that will shape your case study',
   },
   {
+    id: 'prompt',
+    label: 'AI Prompt',
+    description: 'Create detailed prompt with AI assistance',
+    icon: <PsychologyIcon />,
+    estimatedMinutes: 10,
+    helpText: 'Use AI-powered suggestions to craft a comprehensive prompt',
+  },
+  {
     id: 'options',
     label: 'Generation Options',
     description: 'Configure output format and style',
@@ -201,6 +210,7 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
     warnings: [],
   });
 
+  const [aiPrompt, setAiPrompt] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -214,6 +224,7 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
       setGenerationOptions(initialState.generationOptions || {});
       setGeneratedSchema(initialState.generatedSchema);
       setFormData(initialState.formData || {});
+      setAiPrompt(initialState.aiPrompt || '');
     }
   }, [initialState]);
 
@@ -229,14 +240,16 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
         return generatedSchema !== null;
       case 3: // Content
         return formValidation.is_valid;
-      case 4: // Options
+      case 4: // Prompt
+        return aiPrompt.trim().length >= 50; // Require meaningful prompt
+      case 5: // Options
         return true; // Options are always valid (have defaults)
-      case 5: // Preview
+      case 6: // Preview
         return true; // Preview is just for review
       default:
         return false;
     }
-  }, [contentPreferences, selectedFramework, generatedSchema, formValidation]);
+  }, [contentPreferences, selectedFramework, generatedSchema, formValidation, aiPrompt]);
 
   // Update step validation when dependencies change
   useEffect(() => {
@@ -293,11 +306,12 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
         generationOptions,
         generatedSchema,
         formData,
+        aiPrompt,
         lastSaved: new Date().toISOString(),
       };
       onSave(saveState);
     }
-  }, [wizardState, contentPreferences, selectedFramework, generationOptions, generatedSchema, formData, onSave]);
+  }, [wizardState, contentPreferences, selectedFramework, generationOptions, generatedSchema, formData, aiPrompt, onSave]);
 
   // Auto-save every 30 seconds
   useEffect(() => {
@@ -489,6 +503,35 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
     </Box>
   );
 
+  const renderPromptStep = () => (
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        AI-Powered Prompt Creation
+      </Typography>
+      <Typography variant="body2" color="text.secondary" paragraph>
+        Create a detailed prompt for your case study using AI-powered suggestions and templates.
+      </Typography>
+
+      <AIPromptArea
+        value={aiPrompt}
+        onChange={setAiPrompt}
+        framework={selectedFramework?.name}
+        industry={selectedFramework?.category}
+        placeholder="Describe your case study scenario in detail. The AI will help you craft a comprehensive prompt that incorporates your selected framework and input data..."
+        maxLength={5000}
+        showSuggestions={true}
+        showTemplates={true}
+        showHistory={true}
+        onSuggestionAccept={(suggestion) => {
+          console.log('Suggestion accepted:', suggestion);
+        }}
+        onTemplateSelect={(template) => {
+          console.log('Template selected:', template);
+        }}
+      />
+    </Box>
+  );
+
   const renderOptionsStep = () => (
     <Card variant="outlined">
       <CardContent>
@@ -605,7 +648,7 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
 
       {/* Summary cards */}
       <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={4}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="subtitle2" gutterBottom>Framework</Typography>
@@ -615,12 +658,22 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={4}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="subtitle2" gutterBottom>Output Type</Typography>
               <Typography variant="body2">
                 {generationOptions.outputType} ({generationOptions.wordCount} length)
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Card variant="outlined">
+            <CardContent>
+              <Typography variant="subtitle2" gutterBottom>AI Prompt</Typography>
+              <Typography variant="body2">
+                {aiPrompt ? `${aiPrompt.substring(0, 50)}...` : 'No prompt created'}
               </Typography>
             </CardContent>
           </Card>
@@ -645,6 +698,8 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
                     framework: selectedFramework,
                     options: generationOptions,
                     data: formData,
+                    prompt: aiPrompt,
+                    preferences: contentPreferences,
                   });
                 }
               }, 3000);
@@ -673,8 +728,9 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
       case 1: return renderFrameworkStep();
       case 2: return renderConfigurationStep();
       case 3: return renderContentStep();
-      case 4: return renderOptionsStep();
-      case 5: return renderPreviewStep();
+      case 4: return renderPromptStep();
+      case 5: return renderOptionsStep();
+      case 6: return renderPreviewStep();
       default: return <Typography>Unknown step</Typography>;
     }
   };

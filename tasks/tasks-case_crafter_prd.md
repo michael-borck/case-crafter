@@ -75,6 +75,9 @@ Based on the Case Crafter PRD (docs/case_crafter_prd.md)
 - `src/hooks/useGenerationSession.ts` - Hook for managing case study generation sessions and persistence (created)
 - `src/components/generation/StructuredInputForm.tsx` - Enhanced structured input form with field grouping, filtering, and progress tracking (created)
 - `src/components/generation/DynamicFieldRenderer.tsx` - Comprehensive field renderer supporting 15+ field types with advanced features (created)
+- `src/components/generation/AIPromptArea.tsx` - AI-powered prompt builder with suggestions, templates, and history management (created)
+- `src/hooks/useAIPromptSuggestions.ts` - React hook for managing AI prompt suggestions, templates, and analysis (created)
+- `src/components/generation/PromptEnhancementDialog.tsx` - Advanced dialog for AI-powered prompt analysis and enhancement (created)
 - `src/components/Dashboard.tsx` - Main dashboard interface component
 - `src/components/CaseStudyGenerator/` - Case study generation interface components
 - `src/components/ConfigurationManager/` - Administrative configuration interface
@@ -136,7 +139,7 @@ Based on the Case Crafter PRD (docs/case_crafter_prd.md)
 - [ ] 5.0 Case Study Generation Interface
   - [x] 5.1 Create step-by-step generation wizard interface
   - [x] 5.2 Implement structured input form with dynamic field rendering
-  - [ ] 5.3 Build free-form prompt area with AI-powered suggestions
+  - [x] 5.3 Build free-form prompt area with AI-powered suggestions
   - [ ] 5.4 Create generation options interface (full/outline/questions only)
   - [ ] 5.5 Implement content structure configuration (elements to include)
   - [ ] 5.6 Add real-time preview and editing capabilities
