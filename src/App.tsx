@@ -35,6 +35,7 @@ import {
   AutoAwesome as GeneratorIcon,
   AccountTree as ConditionalIcon,
   LibraryBooks as LibraryIcon,
+  History as HistoryIcon,
 } from "@mui/icons-material";
 import { useTheme } from "./theme/ThemeProvider";
 import { AIConfigPage } from "./components/ai-config/AIConfigPage";
@@ -43,13 +44,13 @@ import { ValidationDemo } from "./components/forms/ValidationDemo";
 import { ConditionalLogicDemo } from "./components/forms/ConditionalLogicDemo";
 import { CaseStudyWizard } from "./components/generation/CaseStudyWizard";
 import { TemplateManager, TemplateStore, TemplateBuilder } from "./components/configuration";
-import { ContentLibrary, CategoryManager } from "./components/content";
+import { ContentLibrary, CategoryManager, RevisionHistory } from "./components/content";
 
 const SIDEBAR_WIDTH = 280;
 const SIDEBAR_COLLAPSED_WIDTH = 72;
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'ai-config' | 'case-studies' | 'questions' | 'configuration' | 'validation' | 'conditional' | 'generator' | 'templates' | 'template-store' | 'template-builder' | 'categories'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'ai-config' | 'case-studies' | 'questions' | 'configuration' | 'validation' | 'conditional' | 'generator' | 'templates' | 'template-store' | 'template-builder' | 'categories' | 'revisions'>('home');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { mode, toggleTheme } = useTheme();
 
@@ -75,6 +76,8 @@ function App() {
         return <ContentLibrary />;
       case 'categories':
         return <CategoryManager />;
+      case 'revisions':
+        return <RevisionHistory />;
       case 'home':
       default:
         return renderHomePage();
@@ -293,6 +296,7 @@ function App() {
     { id: 'generator', label: 'Case Study Generator', icon: <GeneratorIcon />, category: 'content' },
     { id: 'case-studies', label: 'Content Library', icon: <LibraryIcon />, category: 'content' },
     { id: 'categories', label: 'Categories & Tags', icon: <ConfigIcon />, category: 'content' },
+    { id: 'revisions', label: 'Revision History', icon: <HistoryIcon />, category: 'content' },
     { id: 'templates', label: 'Template Manager', icon: <TemplateIcon />, category: 'templates' },
     { id: 'template-store', label: 'Template Store', icon: <StoreIcon />, category: 'templates' },
     { id: 'template-builder', label: 'Template Builder', icon: <BuilderIcon />, category: 'templates' },
