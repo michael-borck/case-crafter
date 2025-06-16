@@ -537,6 +537,11 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
               helperText="Who will be using this case study?"
               multiline
               rows={2}
+              value={contentPreferences.targetAudience.join('\n')}
+              onChange={(e) => setContentPreferences(prev => ({
+                ...prev,
+                targetAudience: e.target.value.split('\n').filter(line => line.trim())
+              }))}
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -564,6 +569,11 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
               multiline
               rows={3}
               helperText="List the key learning outcomes (one per line)"
+              value={contentPreferences.learningObjectives.join('\n')}
+              onChange={(e) => setContentPreferences(prev => ({
+                ...prev,
+                learningObjectives: e.target.value.split('\n').filter(line => line.trim())
+              }))}
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -573,6 +583,11 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
               placeholder="What should students know beforehand?"
               multiline
               rows={2}
+              value={contentPreferences.prerequisites.join('\n')}
+              onChange={(e) => setContentPreferences(prev => ({
+                ...prev,
+                prerequisites: e.target.value.split('\n').filter(line => line.trim())
+              }))}
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -1334,7 +1349,7 @@ export const CaseStudyWizard: React.FC<CaseStudyWizardProps> = ({
             onDeleteSession={handleDeleteSession}
             onExportSession={handleExportSession}
             onImportSession={handleImportSession}
-            disabled={disabled}
+            disabled={isGenerating}
           />
         </DialogContent>
       </Dialog>

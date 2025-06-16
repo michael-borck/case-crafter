@@ -312,7 +312,6 @@ function App() {
     { id: 'generator', label: 'Case Study Generator', icon: <GeneratorIcon />, category: 'content' },
     { id: 'case-studies', label: 'Content Library', icon: <LibraryIcon />, category: 'content' },
     { id: 'categories', label: 'Categories & Tags', icon: <ConfigIcon />, category: 'content' },
-    { id: 'revisions', label: 'Revision History', icon: <HistoryIcon />, category: 'content' },
     { id: 'question-generator', label: 'Question Generator', icon: <AssessmentIcon />, category: 'assessment' },
     { id: 'analytics', label: 'Content Analytics', icon: <AnalysisIcon />, category: 'assessment' },
     { id: 'templates', label: 'Template Manager', icon: <TemplateIcon />, category: 'templates' },
