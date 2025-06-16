@@ -67,7 +67,7 @@ import {
   GetApp as ExportIcon,
 } from '@mui/icons-material';
 
-import { ContentExporter } from './ContentExporter';
+// import { ContentExporter } from './ContentExporter';
 
 // Content item interface representing a case study or educational content
 export interface ContentItem {
@@ -494,13 +494,20 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({
 
   // Get available filter options from content
   const availableOptions = useMemo(() => {
+    const typeSet = new Set(contentItems.map(item => item.type));
+    const categorySet = new Set(contentItems.map(item => item.category));
+    const tagSet = new Set(contentItems.flatMap(item => item.tags));
+    const frameworkSet = new Set(contentItems.map(item => item.framework).filter(Boolean));
+    const industrySet = new Set(contentItems.flatMap(item => item.metadata.industry));
+    const authorSet = new Set(contentItems.map(item => item.author.name));
+    
     return {
-      types: [...new Set(contentItems.map(item => item.type))],
-      categories: [...new Set(contentItems.map(item => item.category))],
-      tags: [...new Set(contentItems.flatMap(item => item.tags))].sort(),
-      frameworks: [...new Set(contentItems.map(item => item.framework).filter(Boolean))].sort(),
-      industries: [...new Set(contentItems.flatMap(item => item.metadata.industry))].sort(),
-      authors: [...new Set(contentItems.map(item => item.author.name))].sort(),
+      types: Array.from(typeSet),
+      categories: Array.from(categorySet),
+      tags: Array.from(tagSet).sort(),
+      frameworks: Array.from(frameworkSet).sort(),
+      industries: Array.from(industrySet).sort(),
+      authors: Array.from(authorSet).sort(),
     };
   }, [contentItems]);
 
@@ -1093,10 +1100,12 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({
       >
         <DialogContent>
           {exportDialog.contentItem && (
-            <ContentExporter
-              contentItem={exportDialog.contentItem}
-              onClose={() => setExportDialog({ open: false, contentItem: null })}
-            />
+            <Box>
+              <Typography>Export functionality temporarily disabled</Typography>
+              <Button onClick={() => setExportDialog({ open: false, contentItem: null })}>
+                Close
+              </Button>
+            </Box>
           )}
         </DialogContent>
       </Dialog>

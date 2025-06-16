@@ -46,7 +46,8 @@ import { ValidationDemo } from "./components/forms/ValidationDemo";
 import { ConditionalLogicDemo } from "./components/forms/ConditionalLogicDemo";
 import { CaseStudyWizard } from "./components/generation/CaseStudyWizard";
 import { TemplateManager, TemplateStore, TemplateBuilder } from "./components/configuration";
-import { ContentLibrary, CategoryManager, RevisionHistory } from "./components/content";
+import { ContentLibrary } from "./components/content";
+import { ContentLibrarySimple } from "./components/content/ContentLibrarySimple";
 import { QuestionGenerator } from "./components/assessment";
 import { ContentAnalytics } from "./components/analytics";
 
@@ -79,81 +80,13 @@ function App() {
       case 'case-studies':
         return <ContentLibrary />;
       case 'categories':
-        return <CategoryManager />;
+        return <div>Category Manager - Temporarily disabled due to import issues</div>;
       case 'revisions':
-        return <RevisionHistory />;
+        return <div>Revision History - Temporarily disabled due to import issues</div>;
       case 'question-generator':
-        return <QuestionGenerator 
-          contentItem={{
-            id: 'demo',
-            title: 'Sample Case Study',
-            description: 'A sample case study for demonstration purposes',
-            content: 'This is sample content for generating assessment questions...',
-            type: 'case_study',
-            category: 'business',
-            tags: ['strategy', 'analysis', 'decision-making'],
-            difficulty: 'intermediate',
-            estimatedTime: 60,
-            wordCount: 1500,
-            rating: 4.5,
-            ratingCount: 10,
-            framework: 'SWOT Analysis',
-            author: { id: 'demo', name: 'Demo Author' },
-            metadata: {
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              accessCount: 0,
-              isPublic: true,
-              isFeatured: false,
-              isBookmarked: false,
-              downloadCount: 0,
-              shareCount: 0,
-              version: '1.0',
-              language: 'English',
-              industry: ['Technology'],
-              learningObjectives: ['Understand strategic analysis'],
-              prerequisites: [],
-            },
-            searchableContent: 'Sample case study for demonstration purposes. This is sample content for generating assessment questions using AI-powered tools. Strategy analysis decision-making business framework SWOT.',
-          }}
-        />;
+        return <QuestionGenerator />;
       case 'analytics':
-        return <ContentAnalytics 
-          contentItems={[
-            {
-              id: 'demo',
-              title: 'Sample Case Study',
-              description: 'A sample case study for demonstration purposes',
-              content: 'This is sample content for generating assessment questions. Digital transformation has become a critical imperative for businesses across all industries. Companies must adapt to rapidly changing technology landscapes while maintaining operational efficiency. The integration of artificial intelligence, cloud computing, and data analytics presents both opportunities and challenges. Organizations need to develop comprehensive strategies that balance innovation with risk management. Successful digital transformation requires strong leadership, employee engagement, and a clear vision for the future.',
-              type: 'case_study',
-              category: 'business',
-              tags: ['strategy', 'analysis', 'decision-making'],
-              difficulty: 'intermediate',
-              estimatedTime: 60,
-              wordCount: 500,
-              rating: 4.5,
-              ratingCount: 10,
-              framework: 'SWOT Analysis',
-              author: { id: 'demo', name: 'Demo Author' },
-              metadata: {
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                accessCount: 0,
-                isPublic: true,
-                isFeatured: false,
-                isBookmarked: false,
-                downloadCount: 0,
-                shareCount: 0,
-                version: '1.0',
-                language: 'English',
-                industry: ['Technology'],
-                learningObjectives: ['Understand strategic analysis'],
-                prerequisites: [],
-              },
-              searchableContent: 'Sample case study for demonstration purposes. Digital transformation artificial intelligence cloud computing data analytics innovation risk management leadership employee engagement strategic planning.',
-            }
-          ]}
-        />;
+        return <ContentAnalytics />;
       case 'home':
       default:
         return renderHomePage();

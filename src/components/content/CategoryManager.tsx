@@ -37,8 +37,6 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  TreeView,
-  TreeItem,
   Autocomplete,
   Switch,
   FormControlLabel,
